@@ -15,6 +15,18 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+/*
+business rule: says there should be only one open demand for the same need.
+Code logic
+If no open demand exists:
+    create new demand with interestedCount = 1
+If one open demand exists:
+    increment interestedCount + 1
+If multiple open duplicate demands exist:
+    merge all interestedCount into the first demand
+    add +1 for the new request
+    cancel the duplicate demands*/
+
 @Service
 @RequiredArgsConstructor
 public class DemandService {
@@ -38,18 +50,32 @@ public class DemandService {
             throw new RuntimeException("Departure city and arrival city cannot be the same");
         }
 
-        Demand existingDemand = demandRepository
-                .findByDepartureCityIdAndArrivalCityIdAndDesiredTimeAndPeriod(
+        List<Demand> openDuplicates = demandRepository
+                .findByDepartureCityIdAndArrivalCityIdAndDesiredTimeAndPeriodAndStatus(
                         request.getDepartureCityId(),
                         request.getArrivalCityId(),
                         request.getDesiredTime(),
-                        request.getPeriod()
-                )
-                .orElse(null);
+                        request.getPeriod(),
+                        DemandStatus.OUVERTE
+                );
 
-        if (existingDemand != null && existingDemand.getStatus() == DemandStatus.OUVERTE) {
-            existingDemand.setInterestedCount(existingDemand.getInterestedCount() + 1);
-            Demand updatedDemand = demandRepository.save(existingDemand);
+        if (!openDuplicates.isEmpty()) {
+            Demand mainDemand = openDuplicates.get(0);
+
+            int totalInterested = openDuplicates.stream()
+                    .mapToInt(demand -> demand.getInterestedCount() == null ? 0 : demand.getInterestedCount())
+                    .sum();
+
+            mainDemand.setInterestedCount(totalInterested + 1);
+
+            for (int i = 1; i < openDuplicates.size(); i++) {
+                Demand duplicateDemand = openDuplicates.get(i);
+                duplicateDemand.setStatus(DemandStatus.ANNULEE);
+                demandRepository.save(duplicateDemand);
+            }
+
+            Demand updatedDemand = demandRepository.save(mainDemand);
+
             return mapToResponse(updatedDemand);
         }
 

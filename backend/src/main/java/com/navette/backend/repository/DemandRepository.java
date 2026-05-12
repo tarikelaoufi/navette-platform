@@ -6,15 +6,15 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.time.LocalTime;
 import java.util.List;
-import java.util.Optional;
 
 public interface DemandRepository extends JpaRepository<Demand, Long> {
 
-    Optional<Demand> findByDepartureCityIdAndArrivalCityIdAndDesiredTimeAndPeriod(
+    List<Demand> findByDepartureCityIdAndArrivalCityIdAndDesiredTimeAndPeriodAndStatus(
             Long departureCityId,
             Long arrivalCityId,
             LocalTime desiredTime,
-            String period
+            String period,
+            DemandStatus status
     );
 
     List<Demand> findByUserId(Long userId);
