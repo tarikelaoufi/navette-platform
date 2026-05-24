@@ -1,0 +1,10 @@
+1. Create React app with Vite
+2. Install dependencies
+3. Create folder structure
+4. Create Axios API config
+5. Create Auth pages
+6. Create layouts
+7. Create public pages: Home, Offers, Search
+8. Create user dashboard
+9. Create company dashboard
+10. Create admin dashboard
