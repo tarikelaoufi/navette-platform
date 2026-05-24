@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 
 import PublicLayout from "../layouts/PublicLayout";
+import DashboardLayout from "../layouts/DashboardLayout";
 import ProtectedRoute from "../components/ProtectedRoute";
 
 import HomePage from "../pages/public/HomePage";
@@ -24,31 +25,34 @@ export default function AppRouter() {
             </Route>
 
             <Route
-                path="/user/dashboard"
                 element={
                     <ProtectedRoute allowedRoles={["ROLE_USER"]}>
-                        <UserDashboard />
+                        <DashboardLayout role="user" />
                     </ProtectedRoute>
                 }
-            />
+            >
+                <Route path="/user/dashboard" element={<UserDashboard />} />
+            </Route>
 
             <Route
-                path="/company/dashboard"
                 element={
                     <ProtectedRoute allowedRoles={["ROLE_COMPANY"]}>
-                        <CompanyDashboard />
+                        <DashboardLayout role="company" />
                     </ProtectedRoute>
                 }
-            />
+            >
+                <Route path="/company/dashboard" element={<CompanyDashboard />} />
+            </Route>
 
             <Route
-                path="/admin/dashboard"
                 element={
                     <ProtectedRoute allowedRoles={["ROLE_ADMIN"]}>
-                        <AdminDashboard />
+                        <DashboardLayout role="admin" />
                     </ProtectedRoute>
                 }
-            />
+            >
+                <Route path="/admin/dashboard" element={<AdminDashboard />} />
+            </Route>
 
             <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

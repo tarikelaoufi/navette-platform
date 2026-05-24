@@ -79,3 +79,142 @@ body {
 .navbar {
   backdrop-filter: blur(16px);
 }
+
+.dashboard-shell {
+  min-height: 100vh;
+  display: flex;
+  background: #f6f8fb;
+}
+
+.dashboard-sidebar {
+  width: 280px;
+  min-height: 100vh;
+  background: rgba(255, 255, 255, 0.92);
+  border-right: 1px solid rgba(226, 232, 240, 0.9);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 0;
+}
+
+.dashboard-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #0d6efd;
+  font-size: 22px;
+  font-weight: 800;
+  text-decoration: none;
+  margin-bottom: 28px;
+}
+
+.dashboard-user-box {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+  padding: 14px;
+  margin-bottom: 24px;
+}
+
+.dashboard-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  background: #0d6efd;
+  color: white;
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+}
+
+.dashboard-user-box strong {
+  display: block;
+  font-size: 14px;
+}
+
+.dashboard-user-box small {
+  color: #64748b;
+  font-size: 12px;
+}
+
+.dashboard-nav {
+  display: grid;
+  gap: 10px;
+}
+
+.dashboard-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #334155;
+  text-decoration: none;
+  padding: 12px 14px;
+  border-radius: 14px;
+  transition: 0.2s ease;
+}
+
+.dashboard-link:hover {
+  background: #eef5ff;
+  color: #0d6efd;
+}
+
+.dashboard-logout {
+  margin-top: auto;
+  border: 0;
+  background: #fee2e2;
+  color: #b91c1c;
+  padding: 12px 14px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+}
+
+.dashboard-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.dashboard-header {
+  height: 86px;
+  background: rgba(255, 255, 255, 0.86);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 32px;
+  backdrop-filter: blur(16px);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.dashboard-header h4 {
+  margin: 0;
+  font-weight: 800;
+}
+
+.dashboard-header p {
+  margin: 4px 0 0;
+  color: #64748b;
+}
+
+.dashboard-role-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #eef5ff;
+  color: #0d6efd;
+  padding: 10px 14px;
+  border-radius: 999px;
+  font-weight: 700;
+}
+
+.dashboard-content {
+  padding: 32px;
+}
