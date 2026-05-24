@@ -14,12 +14,15 @@ import UserDashboard from "../pages/user/UserDashboard";
 import CompanyDashboard from "../pages/company/CompanyDashboard";
 import AdminDashboard from "../pages/admin/AdminDashboard";
 
+import OfferDetailsPage from "../pages/public/OfferDetailsPage";
+
 export default function AppRouter() {
     return (
         <Routes>
             <Route element={<PublicLayout />}>
                 <Route path="/" element={<HomePage />} />
                 <Route path="/offers" element={<OffersPage />} />
+                <Route path="/offers/:id" element={<OfferDetailsPage />} />
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/register" element={<RegisterPage />} />
             </Route>

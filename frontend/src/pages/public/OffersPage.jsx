@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { CalendarDays, MapPin, Search, Users, Clock, Bus } from "lucide-react";
 import api from "../../api/axios";
+import { Link } from "react-router-dom";
 
 export default function OffersPage() {
     const [offers, setOffers] = useState([]);
@@ -217,9 +218,9 @@ export default function OffersPage() {
                                         <h4 className="fw-bold mb-0">{offer.price} MAD</h4>
                                     </div>
 
-                                    <button className="btn btn-primary">
+                                    <Link to={`/offers/${offer.id}`} className="btn btn-primary">
                                         Voir détails
-                                    </button>
+                                    </Link>
                                 </div>
                             </article>
                         </div>

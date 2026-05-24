@@ -290,3 +290,112 @@ body {
   font-weight: 800;
 }
 
+.offer-details-card {
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  border-radius: 28px;
+  padding: 32px;
+  backdrop-filter: blur(14px);
+}
+
+.price-box {
+  background: #eef5ff;
+  color: #0d6efd;
+  border-radius: 22px;
+  padding: 18px 24px;
+  min-width: 180px;
+  text-align: center;
+}
+
+.price-box small {
+  display: block;
+  font-weight: 600;
+}
+
+.price-box strong {
+  display: block;
+  font-size: 28px;
+  font-weight: 900;
+}
+
+.route-details {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  background: #f8fafc;
+  border-radius: 24px;
+  padding: 24px;
+}
+
+.route-details small {
+  color: #64748b;
+}
+
+.route-details h4 {
+  margin: 4px 0 0;
+  font-weight: 800;
+}
+
+.route-details-line {
+  flex: 1;
+  height: 3px;
+  background: linear-gradient(90deg, #0d6efd, #93c5fd);
+  border-radius: 999px;
+}
+
+.detail-box {
+  height: 100%;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 22px;
+  padding: 20px;
+  display: grid;
+  gap: 8px;
+}
+
+.detail-box svg {
+  color: #0d6efd;
+}
+
+.detail-box small {
+  color: #64748b;
+}
+
+.detail-box strong {
+  font-size: 15px;
+}
+
+.company-box {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: #f8fafc;
+  border-radius: 22px;
+  padding: 20px;
+}
+
+.company-box svg {
+  color: #0d6efd;
+}
+
+.company-box small {
+  display: block;
+  color: #64748b;
+}
+
+.company-box strong {
+  display: block;
+  font-weight: 800;
+}
+
+@media (max-width: 768px) {
+  .route-details {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .route-details-line {
+    width: 100%;
+    flex: unset;
+  }
+}
