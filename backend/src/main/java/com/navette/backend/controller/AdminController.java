@@ -48,6 +48,11 @@ public class AdminController {
         return adminService.getDemands();
     }
 
+    @GetMapping("/reservations")
+    public List<?> getReservations() {
+        return adminService.getReservations();
+    }
+
     @GetMapping("/stats")
     public AdminStatsResponse getStats() {
         return adminService.getStats();

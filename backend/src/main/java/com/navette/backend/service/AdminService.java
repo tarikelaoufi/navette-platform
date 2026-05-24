@@ -48,6 +48,10 @@ public class AdminService {
         return demandRepository.findAll();
     }
 
+    public List<?> getReservations() {
+        return reservationRepository.findAll();
+    }
+
     public TransportCompany updateCompanyStatus(Long id, CompanyStatusRequest request) {
         TransportCompany company = transportCompanyRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Transport company not found"));
