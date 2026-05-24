@@ -17,5 +17,6 @@ public class AdminStatsResponse {
     private long totalShuttles;
     private long totalOffers;
     private long totalSubscriptions;
+    private long totalReservations;
     private long totalDemands;
 }

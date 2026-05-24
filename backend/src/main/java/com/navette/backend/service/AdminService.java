@@ -9,6 +9,7 @@ import com.navette.backend.entity.User;
 import com.navette.backend.repository.CityRepository;
 import com.navette.backend.repository.DemandRepository;
 import com.navette.backend.repository.OfferRepository;
+import com.navette.backend.repository.ReservationRepository;
 import com.navette.backend.repository.ShuttleRepository;
 import com.navette.backend.repository.SubscriptionRepository;
 import com.navette.backend.repository.TransportCompanyRepository;
@@ -28,6 +29,7 @@ public class AdminService {
     private final ShuttleRepository shuttleRepository;
     private final OfferRepository offerRepository;
     private final SubscriptionRepository subscriptionRepository;
+    private final ReservationRepository reservationRepository;
     private final DemandRepository demandRepository;
 
     public List<User> getUsers() {
@@ -63,6 +65,7 @@ public class AdminService {
                 .totalShuttles(shuttleRepository.count())
                 .totalOffers(offerRepository.count())
                 .totalSubscriptions(subscriptionRepository.count())
+                .totalReservations(reservationRepository.count())
                 .totalDemands(demandRepository.count())
                 .build();
     }
