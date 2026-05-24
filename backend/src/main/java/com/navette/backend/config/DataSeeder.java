@@ -2,14 +2,20 @@ package com.navette.backend.config;
 
 import com.navette.backend.entity.City;
 import com.navette.backend.entity.Role;
+import com.navette.backend.entity.User;
 import com.navette.backend.enums.RoleName;
+import com.navette.backend.enums.UserStatus;
 import com.navette.backend.repository.CityRepository;
 import com.navette.backend.repository.RoleRepository;
+import com.navette.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Set;
 
 @Component
 @RequiredArgsConstructor
@@ -17,11 +23,20 @@ public class DataSeeder implements CommandLineRunner {
 
     private final RoleRepository roleRepository;
     private final CityRepository cityRepository;
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+
+    @Value("${app.admin.email}")
+    private String adminEmail;
+
+    @Value("${app.admin.password}")
+    private String adminPassword;
 
     @Override
     public void run(String... args) {
         seedRoles();
         seedCities();
+        seedAdmin();
     }
 
     private void seedRoles() {
@@ -64,5 +79,26 @@ public class DataSeeder implements CommandLineRunner {
         );
 
         cityRepository.saveAll(cities);
+    }
+
+    private void seedAdmin() {
+        if (userRepository.existsByEmail(adminEmail)) {
+            return;
+        }
+
+        Role adminRole = roleRepository.findByName(RoleName.ROLE_ADMIN)
+                .orElseThrow(() -> new RuntimeException("ROLE_ADMIN not found"));
+
+        User admin = User.builder()
+                .firstName("Admin")
+                .lastName("System")
+                .email(adminEmail)
+                .password(passwordEncoder.encode(adminPassword))
+                .phone("0000000000")
+                .status(UserStatus.ACTIF)
+                .roles(Set.of(adminRole))
+                .build();
+
+        userRepository.save(admin);
     }
 }
