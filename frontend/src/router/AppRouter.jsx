@@ -1,6 +1,8 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 
 import PublicLayout from "../layouts/PublicLayout";
+import ProtectedRoute from "../components/ProtectedRoute";
+
 import HomePage from "../pages/public/HomePage";
 import OffersPage from "../pages/public/OffersPage";
 
@@ -21,9 +23,32 @@ export default function AppRouter() {
                 <Route path="/register" element={<RegisterPage />} />
             </Route>
 
-            <Route path="/user/dashboard" element={<UserDashboard />} />
-            <Route path="/company/dashboard" element={<CompanyDashboard />} />
-            <Route path="/admin/dashboard" element={<AdminDashboard />} />
+            <Route
+                path="/user/dashboard"
+                element={
+                    <ProtectedRoute allowedRoles={["ROLE_USER"]}>
+                        <UserDashboard />
+                    </ProtectedRoute>
+                }
+            />
+
+            <Route
+                path="/company/dashboard"
+                element={
+                    <ProtectedRoute allowedRoles={["ROLE_COMPANY"]}>
+                        <CompanyDashboard />
+                    </ProtectedRoute>
+                }
+            />
+
+            <Route
+                path="/admin/dashboard"
+                element={
+                    <ProtectedRoute allowedRoles={["ROLE_ADMIN"]}>
+                        <AdminDashboard />
+                    </ProtectedRoute>
+                }
+            />
 
             <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

@@ -1,7 +1,11 @@
-1. Create React app with Vite
-2. Install dependencies
-3. Create folder structure
+1. Create React app with Vite done
+2. Install dependencies done
+3. Create folder structure done
 4. Create Axios API config
+- Logout
+- User dashboard real data
+- Company dashboard real data
+- Admin dashboard real stats
 5. Create Auth pages
 6. Create layouts
 7. Create public pages: Home, Offers, Search
