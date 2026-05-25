@@ -1,52 +1,112 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { CalendarDays, MapPin, Search, Users, Clock, Bus } from "lucide-react";
 import api from "../../api/axios";
-import { Link } from "react-router-dom";
 
 export default function OffersPage() {
     const [offers, setOffers] = useState([]);
     const [cities, setCities] = useState([]);
 
-    const [departureCityId, setDepartureCityId] = useState("");
-    const [arrivalCityId, setArrivalCityId] = useState("");
+    const [departureCityName, setDepartureCityName] = useState("");
+    const [arrivalCityName, setArrivalCityName] = useState("");
+
+    const [showDepartureSuggestions, setShowDepartureSuggestions] = useState(false);
+    const [showArrivalSuggestions, setShowArrivalSuggestions] = useState(false);
 
     const [loading, setLoading] = useState(true);
     const [searching, setSearching] = useState(false);
     const [error, setError] = useState("");
 
-    const fetchOffers = async () => {
-        setLoading(true);
+    const loadInitialData = async () => {
         setError("");
 
         try {
-            const response = await api.get("/api/offers");
-            setOffers(response.data);
+            const [offersResponse, citiesResponse] = await Promise.all([
+                api.get("/api/offers"),
+                api.get("/api/cities"),
+            ]);
+
+            setOffers(offersResponse.data);
+            setCities(citiesResponse.data);
         } catch (error) {
-            console.error("OFFERS ERROR:", error);
+            console.error("OFFERS PAGE ERROR:", error);
             setError("Impossible de charger les offres.");
         } finally {
             setLoading(false);
         }
     };
 
-    const fetchCities = async () => {
-        try {
-            const response = await api.get("/api/cities");
-            setCities(response.data);
-        } catch (error) {
-            console.error("CITIES ERROR:", error);
+    useEffect(() => {
+        let isMounted = true;
+
+        Promise.all([api.get("/api/offers"), api.get("/api/cities")])
+            .then(([offersResponse, citiesResponse]) => {
+                if (!isMounted) return;
+
+                setOffers(offersResponse.data);
+                setCities(citiesResponse.data);
+            })
+            .catch((error) => {
+                console.error("OFFERS PAGE ERROR:", error);
+
+                if (isMounted) {
+                    setError("Impossible de charger les offres.");
+                }
+            })
+            .finally(() => {
+                if (isMounted) {
+                    setLoading(false);
+                }
+            });
+
+        return () => {
+            isMounted = false;
+        };
+    }, []);
+
+    const findCityByName = (name) => {
+        const normalizedSearch = normalizeText(name);
+
+        return (
+            cities.find((city) => normalizeText(city.name) === normalizedSearch) ||
+            cities.find((city) => normalizeText(city.name).includes(normalizedSearch))
+        );
+    };
+
+    const getCitySuggestions = (value) => {
+        const normalizedValue = normalizeText(value);
+
+        if (!normalizedValue) {
+            return cities.slice(0, 6);
         }
+
+        return cities
+            .filter((city) => normalizeText(city.name).includes(normalizedValue))
+            .slice(0, 6);
     };
 
     const handleSearch = async (event) => {
         event.preventDefault();
 
-        if (!departureCityId || !arrivalCityId) {
-            setError("Veuillez choisir la ville de départ et la ville d’arrivée.");
+        if (!departureCityName.trim() || !arrivalCityName.trim()) {
+            setError("Veuillez saisir la ville de départ et la ville d’arrivée.");
             return;
         }
 
-        if (departureCityId === arrivalCityId) {
+        const departureCity = findCityByName(departureCityName);
+        const arrivalCity = findCityByName(arrivalCityName);
+
+        if (!departureCity) {
+            setError(`Ville de départ introuvable : ${departureCityName}`);
+            return;
+        }
+
+        if (!arrivalCity) {
+            setError(`Ville d’arrivée introuvable : ${arrivalCityName}`);
+            return;
+        }
+
+        if (departureCity.id === arrivalCity.id) {
             setError("La ville de départ et la ville d’arrivée doivent être différentes.");
             return;
         }
@@ -56,7 +116,7 @@ export default function OffersPage() {
 
         try {
             const response = await api.get(
-                `/api/offers/search?departureCityId=${departureCityId}&arrivalCityId=${arrivalCityId}`
+                `/api/offers/search?departureCityId=${departureCity.id}&arrivalCityId=${arrivalCity.id}`
             );
 
             setOffers(response.data);
@@ -68,16 +128,12 @@ export default function OffersPage() {
         }
     };
 
-    const resetSearch = () => {
-        setDepartureCityId("");
-        setArrivalCityId("");
-        fetchOffers();
+    const resetSearch = async () => {
+        setDepartureCityName("");
+        setArrivalCityName("");
+        setLoading(true);
+        await loadInitialData();
     };
-
-    useEffect(() => {
-        fetchOffers();
-        fetchCities();
-    }, []);
 
     return (
         <div className="container py-5">
@@ -86,13 +142,19 @@ export default function OffersPage() {
           <span className="badge bg-primary-subtle text-primary mb-3">
             Offres publiques
           </span>
+
                     <h1 className="fw-bold mb-2">Offres disponibles</h1>
+
                     <p className="text-muted mb-0">
-                        Consultez les offres ouvertes proposées par les sociétés de transport.
+                        Saisissez les villes pour rechercher une navette disponible.
                     </p>
                 </div>
 
-                <button className="btn btn-outline-primary align-self-start" onClick={resetSearch}>
+                <button
+                    type="button"
+                    className="btn btn-outline-primary align-self-start"
+                    onClick={resetSearch}
+                >
                     Afficher toutes les offres
                 </button>
             </div>
@@ -101,43 +163,111 @@ export default function OffersPage() {
                 <div className="row g-3 align-items-end">
                     <div className="col-md-5">
                         <label className="form-label">Ville de départ</label>
-                        <select
-                            className="form-select"
-                            value={departureCityId}
-                            onChange={(event) => setDepartureCityId(event.target.value)}
-                        >
-                            <option value="">Choisir une ville</option>
-                            {cities.map((city) => (
-                                <option key={city.id} value={city.id}>
-                                    {city.name}
-                                </option>
-                            ))}
-                        </select>
+
+                        <div className="autocomplete-wrapper">
+                            <input
+                                type="text"
+                                className="form-control"
+                                placeholder="Exemple : Tanger"
+                                value={departureCityName}
+                                onChange={(event) => {
+                                    setDepartureCityName(event.target.value);
+                                    setShowDepartureSuggestions(true);
+                                }}
+                                onFocus={() => setShowDepartureSuggestions(true)}
+                                onBlur={() => {
+                                    setTimeout(() => setShowDepartureSuggestions(false), 150);
+                                }}
+                            />
+
+                            {showDepartureSuggestions && (
+                                <div className="autocomplete-menu">
+                                    {getCitySuggestions(departureCityName).length === 0 ? (
+                                        <button type="button" className="autocomplete-item disabled">
+                                            Aucune ville trouvée
+                                        </button>
+                                    ) : (
+                                        getCitySuggestions(departureCityName).map((city) => (
+                                            <button
+                                                type="button"
+                                                key={city.id}
+                                                className="autocomplete-item"
+                                                onMouseDown={() => {
+                                                    setDepartureCityName(city.name);
+                                                    setShowDepartureSuggestions(false);
+                                                }}
+                                            >
+                                                {city.name}
+                                                <small>{city.country}</small>
+                                            </button>
+                                        ))
+                                    )}
+                                </div>
+                            )}
+                        </div>
                     </div>
 
                     <div className="col-md-5">
                         <label className="form-label">Ville d’arrivée</label>
-                        <select
-                            className="form-select"
-                            value={arrivalCityId}
-                            onChange={(event) => setArrivalCityId(event.target.value)}
-                        >
-                            <option value="">Choisir une ville</option>
-                            {cities.map((city) => (
-                                <option key={city.id} value={city.id}>
-                                    {city.name}
-                                </option>
-                            ))}
-                        </select>
+
+                        <div className="autocomplete-wrapper">
+                            <input
+                                type="text"
+                                className="form-control"
+                                placeholder="Exemple : Tétouan"
+                                value={arrivalCityName}
+                                onChange={(event) => {
+                                    setArrivalCityName(event.target.value);
+                                    setShowArrivalSuggestions(true);
+                                }}
+                                onFocus={() => setShowArrivalSuggestions(true)}
+                                onBlur={() => {
+                                    setTimeout(() => setShowArrivalSuggestions(false), 150);
+                                }}
+                            />
+
+                            {showArrivalSuggestions && (
+                                <div className="autocomplete-menu">
+                                    {getCitySuggestions(arrivalCityName).length === 0 ? (
+                                        <button type="button" className="autocomplete-item disabled">
+                                            Aucune ville trouvée
+                                        </button>
+                                    ) : (
+                                        getCitySuggestions(arrivalCityName).map((city) => (
+                                            <button
+                                                type="button"
+                                                key={city.id}
+                                                className="autocomplete-item"
+                                                onMouseDown={() => {
+                                                    setArrivalCityName(city.name);
+                                                    setShowArrivalSuggestions(false);
+                                                }}
+                                            >
+                                                {city.name}
+                                                <small>{city.country}</small>
+                                            </button>
+                                        ))
+                                    )}
+                                </div>
+                            )}
+                        </div>
                     </div>
 
                     <div className="col-md-2">
-                        <button type="submit" className="btn btn-primary w-100" disabled={searching}>
+                        <button
+                            type="submit"
+                            className="btn btn-primary w-100"
+                            disabled={searching}
+                        >
                             <Search size={18} />
                             {searching ? "..." : "Chercher"}
                         </button>
                     </div>
                 </div>
+
+                <small className="text-muted d-block mt-3">
+                    Vous pouvez écrire le nom de la ville ou choisir une suggestion.
+                </small>
             </form>
 
             {error && (
@@ -154,10 +284,12 @@ export default function OffersPage() {
             ) : offers.length === 0 ? (
                 <div className="empty-state">
                     <Bus size={44} />
+
                     <h4>Aucune offre trouvée</h4>
+
                     <p>
-                        Aucune navette ne correspond à votre recherche. Vous pourrez créer une demande
-                        depuis votre espace utilisateur.
+                        Aucune navette ne correspond à votre recherche. Vous pouvez créer une
+                        demande depuis votre espace utilisateur.
                     </p>
                 </div>
             ) : (
@@ -229,4 +361,13 @@ export default function OffersPage() {
             )}
         </div>
     );
+}
+
+function normalizeText(value) {
+    return value
+        .toString()
+        .trim()
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "");
 }
