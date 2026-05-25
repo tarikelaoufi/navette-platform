@@ -520,3 +520,18 @@ body {
 .admin-table td {
   color: #334155;
 }
+
+.admin-table {
+  margin-bottom: 0;
+}
+
+.admin-table th {
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.admin-table td {
+  color: #334155;
+}

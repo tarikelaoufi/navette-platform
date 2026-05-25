@@ -3,10 +3,11 @@ import {
     Building2,
     Bus,
     CalendarCheck,
+    MessageSquareText,
     RefreshCw,
+    Route,
     Users,
     WalletCards,
-    MessageSquareText,
 } from "lucide-react";
 import api from "../../api/axios";
 
@@ -14,6 +15,7 @@ export default function AdminDashboard() {
     const [stats, setStats] = useState(null);
     const [users, setUsers] = useState([]);
     const [companies, setCompanies] = useState([]);
+    const [offers, setOffers] = useState([]);
     const [reservations, setReservations] = useState([]);
     const [demands, setDemands] = useState([]);
 
@@ -33,12 +35,14 @@ export default function AdminDashboard() {
                 statsResponse,
                 usersResponse,
                 companiesResponse,
+                offersResponse,
                 reservationsResponse,
                 demandsResponse,
             ] = await Promise.all([
                 api.get("/api/admin/stats"),
                 api.get("/api/admin/users"),
                 api.get("/api/admin/companies"),
+                api.get("/api/admin/offers"),
                 api.get("/api/admin/reservations"),
                 api.get("/api/admin/demands"),
             ]);
@@ -46,6 +50,7 @@ export default function AdminDashboard() {
             setStats(statsResponse.data);
             setUsers(usersResponse.data);
             setCompanies(companiesResponse.data);
+            setOffers(offersResponse.data);
             setReservations(reservationsResponse.data);
             setDemands(demandsResponse.data);
         } catch (error) {
@@ -64,6 +69,7 @@ export default function AdminDashboard() {
             api.get("/api/admin/stats"),
             api.get("/api/admin/users"),
             api.get("/api/admin/companies"),
+            api.get("/api/admin/offers"),
             api.get("/api/admin/reservations"),
             api.get("/api/admin/demands"),
         ])
@@ -72,6 +78,7 @@ export default function AdminDashboard() {
                      statsResponse,
                      usersResponse,
                      companiesResponse,
+                     offersResponse,
                      reservationsResponse,
                      demandsResponse,
                  ]) => {
@@ -80,6 +87,7 @@ export default function AdminDashboard() {
                     setStats(statsResponse.data);
                     setUsers(usersResponse.data);
                     setCompanies(companiesResponse.data);
+                    setOffers(offersResponse.data);
                     setReservations(reservationsResponse.data);
                     setDemands(demandsResponse.data);
                 }
@@ -106,7 +114,9 @@ export default function AdminDashboard() {
         return (
             <div className="text-center py-5">
                 <div className="spinner-border text-primary" role="status" />
-                <p className="text-muted mt-3">Chargement de l’espace administrateur...</p>
+                <p className="text-muted mt-3">
+                    Chargement de l’espace administrateur...
+                </p>
             </div>
         );
     }
@@ -117,7 +127,8 @@ export default function AdminDashboard() {
                 <div>
                     <h1 className="fw-bold mb-1">Tableau de bord administrateur</h1>
                     <p className="text-muted mb-0">
-                        Vue globale sur les utilisateurs, sociétés, offres, réservations et demandes.
+                        Vue globale sur les utilisateurs, sociétés, offres, réservations et
+                        demandes.
                     </p>
                 </div>
 
@@ -163,8 +174,15 @@ export default function AdminDashboard() {
                 <StatCard
                     title="Offres"
                     value={stats?.totalOffers || 0}
-                    icon={<WalletCards size={24} />}
+                    icon={<Route size={24} />}
                     colorClass="bg-warning-subtle text-warning"
+                />
+
+                <StatCard
+                    title="Abonnements"
+                    value={stats?.totalSubscriptions || 0}
+                    icon={<WalletCards size={24} />}
+                    colorClass="bg-secondary-subtle text-secondary"
                 />
 
                 <StatCard
@@ -178,7 +196,7 @@ export default function AdminDashboard() {
                     title="Demandes"
                     value={stats?.totalDemands || 0}
                     icon={<MessageSquareText size={24} />}
-                    colorClass="bg-secondary-subtle text-secondary"
+                    colorClass="bg-dark-subtle text-dark"
                 />
             </div>
 
@@ -241,7 +259,9 @@ export default function AdminDashboard() {
                                     <div className="d-flex justify-content-between gap-3">
                                         <div>
                                             <h6 className="fw-bold mb-1">{company.companyName}</h6>
-                                            <p className="text-muted mb-2">{company.professionalEmail}</p>
+                                            <p className="text-muted mb-2">
+                                                {company.professionalEmail}
+                                            </p>
                                         </div>
 
                                         <span className="badge bg-success-subtle text-success align-self-start">
@@ -253,6 +273,64 @@ export default function AdminDashboard() {
                                         <span>Téléphone : {company.companyPhone || "-"}</span>
                                         <span>Adresse : {company.address || "-"}</span>
                                         <span>Utilisateur : {company.user?.email || "-"}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </section>
+
+            <section className="dashboard-section mb-4">
+                <div className="section-header">
+                    <h4>Offres</h4>
+                    <span>{offers.length}</span>
+                </div>
+
+                {offers.length === 0 ? (
+                    <EmptyBox message="Aucune offre trouvée." />
+                ) : (
+                    <div className="row g-3">
+                        {offers.map((offer) => (
+                            <div className="col-lg-6" key={offer.id}>
+                                <div className="mini-card">
+                                    <div className="d-flex justify-content-between gap-3">
+                                        <div>
+                                            <h6 className="fw-bold mb-1">{offer.title}</h6>
+                                            <p className="text-muted mb-2">
+                                                {offer.departureCity?.name ||
+                                                    offer.departureCityName ||
+                                                    "-"}{" "}
+                                                →{" "}
+                                                {offer.arrivalCity?.name ||
+                                                    offer.arrivalCityName ||
+                                                    "-"}
+                                            </p>
+                                        </div>
+
+                                        <span className="badge bg-warning-subtle text-warning align-self-start">
+                      {offer.status}
+                    </span>
+                                    </div>
+
+                                    <div className="mini-info">
+                    <span>
+                      Société :{" "}
+                        {offer.company?.companyName || offer.companyName || "-"}
+                    </span>
+                                        <span>
+                      Navette : {offer.shuttle?.name || offer.shuttleName || "-"}
+                    </span>
+                                        <span>
+                      Horaire : {offer.departureTime} → {offer.arrivalTime}
+                    </span>
+                                        <span>
+                      Période : {offer.startDate} / {offer.endDate}
+                    </span>
+                                        <span>Prix : {offer.price} MAD</span>
+                                        <span>
+                      Places : {offer.availablePlaces} / {offer.totalPlaces}
+                    </span>
                                     </div>
                                 </div>
                             </div>
@@ -277,10 +355,15 @@ export default function AdminDashboard() {
                                     <div className="d-flex justify-content-between gap-3">
                                         <div>
                                             <h6 className="fw-bold mb-1">
-                                                {reservation.offer?.title || `Réservation #${reservation.id}`}
+                                                {reservation.offer?.title ||
+                                                    reservation.offerTitle ||
+                                                    `Réservation #${reservation.id}`}
                                             </h6>
                                             <p className="text-muted mb-2">
-                                                User ID : {reservation.user?.id || "-"}
+                                                Utilisateur :{" "}
+                                                {reservation.user?.email ||
+                                                    reservation.userEmail ||
+                                                    `ID ${reservation.user?.id || reservation.userId || "-"}`}
                                             </p>
                                         </div>
 
@@ -291,7 +374,10 @@ export default function AdminDashboard() {
 
                                     <div className="mini-info">
                                         <span>Date trajet : {reservation.travelDate}</span>
-                                        <span>Date réservation : {formatDateTime(reservation.reservationDate)}</span>
+                                        <span>
+                      Date réservation :{" "}
+                                            {formatDateTime(reservation.reservationDate)}
+                    </span>
                                         <span>Montant : {reservation.amount} MAD</span>
                                     </div>
                                 </div>
@@ -317,10 +403,17 @@ export default function AdminDashboard() {
                                     <div className="d-flex justify-content-between gap-3">
                                         <div>
                                             <h6 className="fw-bold mb-1">
-                                                {demand.departureCity?.name || "-"} →{" "}
-                                                {demand.arrivalCity?.name || "-"}
+                                                {demand.departureCity?.name ||
+                                                    demand.departureCityName ||
+                                                    "-"}{" "}
+                                                →{" "}
+                                                {demand.arrivalCity?.name ||
+                                                    demand.arrivalCityName ||
+                                                    "-"}
                                             </h6>
-                                            <p className="text-muted mb-2">Période : {demand.period}</p>
+                                            <p className="text-muted mb-2">
+                                                Période : {demand.period}
+                                            </p>
                                         </div>
 
                                         <span className="badge bg-warning-subtle text-warning align-self-start">

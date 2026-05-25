@@ -26,7 +26,7 @@ export default function HomePage() {
                     <div className="row align-items-center min-vh-75 py-5">
                         <div className="col-lg-7">
               <span className="badge bg-primary-subtle text-primary mb-3">
-                Plateforme intelligente de navettes
+                Plateforme de navettes des autocars
               </span>
 
                             <h1 className="display-4 fw-bold mb-4">
