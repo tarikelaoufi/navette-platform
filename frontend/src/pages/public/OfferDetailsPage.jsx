@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import {
     ArrowLeft,
     Bus,
@@ -12,10 +12,17 @@ import api from "../../api/axios";
 
 export default function OfferDetailsPage() {
     const { id } = useParams();
+    const navigate = useNavigate();
 
     const [offer, setOffer] = useState(null);
+    const [travelDate, setTravelDate] = useState("");
+
     const [loading, setLoading] = useState(true);
+    const [reservationLoading, setReservationLoading] = useState(false);
+    const [subscriptionLoading, setSubscriptionLoading] = useState(false);
+
     const [error, setError] = useState("");
+    const [success, setSuccess] = useState("");
 
     useEffect(() => {
         let isMounted = true;
@@ -25,6 +32,7 @@ export default function OfferDetailsPage() {
             .then((response) => {
                 if (isMounted) {
                     setOffer(response.data);
+                    setTravelDate(response.data.startDate || "");
                 }
             })
             .catch((error) => {
@@ -45,6 +53,93 @@ export default function OfferDetailsPage() {
         };
     }, [id]);
 
+    const checkUserAccess = () => {
+        const token = localStorage.getItem("token");
+        const role = localStorage.getItem("role");
+
+        if (!token) {
+            navigate("/login");
+            return false;
+        }
+
+        if (role !== "ROLE_USER") {
+            setError("Seul un utilisateur peut réserver ou s’abonner à une offre.");
+            return false;
+        }
+
+        return true;
+    };
+
+    const handleReservation = async () => {
+        if (!checkUserAccess()) return;
+
+        if (!travelDate) {
+            setError("Veuillez choisir une date de trajet.");
+            return;
+        }
+
+        const userId = localStorage.getItem("userId");
+
+        setReservationLoading(true);
+        setError("");
+        setSuccess("");
+
+        try {
+            await api.post("/api/user/reservations", {
+                userId: Number(userId),
+                offerId: Number(id),
+                travelDate,
+            });
+
+            setSuccess("Réservation effectuée avec succès.");
+
+            const response = await api.get(`/api/offers/${id}`);
+            setOffer(response.data);
+        } catch (error) {
+            console.error("RESERVATION ERROR:", error);
+            setError(
+                error.response?.data?.message ||
+                error.response?.data?.error ||
+                "Impossible d’effectuer la réservation."
+            );
+        } finally {
+            setReservationLoading(false);
+        }
+    };
+
+    const handleSubscription = async () => {
+        if (!checkUserAccess()) return;
+
+        const userId = localStorage.getItem("userId");
+
+        setSubscriptionLoading(true);
+        setError("");
+        setSuccess("");
+
+        try {
+            await api.post("/api/user/subscriptions", {
+                userId: Number(userId),
+                offerId: Number(id),
+                startDate: offer.startDate,
+                endDate: offer.endDate,
+            });
+
+            setSuccess("Abonnement effectué avec succès.");
+
+            const response = await api.get(`/api/offers/${id}`);
+            setOffer(response.data);
+        } catch (error) {
+            console.error("SUBSCRIPTION ERROR:", error);
+            setError(
+                error.response?.data?.message ||
+                error.response?.data?.error ||
+                "Impossible d’effectuer l’abonnement."
+            );
+        } finally {
+            setSubscriptionLoading(false);
+        }
+    };
+
     if (loading) {
         return (
             <div className="container py-5 text-center">
@@ -54,12 +149,22 @@ export default function OfferDetailsPage() {
         );
     }
 
-    if (error || !offer) {
+    if (error && !offer) {
         return (
             <div className="container py-5">
-                <div className="alert alert-danger">
-                    {error || "Offre introuvable."}
-                </div>
+                <div className="alert alert-danger">{error}</div>
+
+                <Link to="/offers" className="btn btn-outline-primary">
+                    Retour aux offres
+                </Link>
+            </div>
+        );
+    }
+
+    if (!offer) {
+        return (
+            <div className="container py-5">
+                <div className="alert alert-danger">Offre introuvable.</div>
 
                 <Link to="/offers" className="btn btn-outline-primary">
                     Retour aux offres
@@ -94,6 +199,18 @@ export default function OfferDetailsPage() {
                         <strong>{offer.price} MAD</strong>
                     </div>
                 </div>
+
+                {success && (
+                    <div className="alert alert-success" role="alert">
+                        {success}
+                    </div>
+                )}
+
+                {error && (
+                    <div className="alert alert-danger" role="alert">
+                        {error}
+                    </div>
+                )}
 
                 <div className="route-details mb-4">
                     <div>
@@ -158,14 +275,41 @@ export default function OfferDetailsPage() {
                     </div>
                 </div>
 
-                <div className="d-flex flex-wrap gap-3">
-                    <Link to="/login" className="btn btn-primary btn-lg">
-                        Se connecter pour réserver
-                    </Link>
+                <div className="action-box mb-4">
+                    <div>
+                        <label className="form-label">Date du trajet</label>
+                        <input
+                            type="date"
+                            className="form-control"
+                            min={offer.startDate}
+                            max={offer.endDate}
+                            value={travelDate}
+                            onChange={(event) => setTravelDate(event.target.value)}
+                        />
+                        <small className="text-muted">
+                            La date doit être entre {offer.startDate} et {offer.endDate}.
+                        </small>
+                    </div>
+                </div>
 
-                    <Link to="/login" className="btn btn-outline-primary btn-lg">
-                        Se connecter pour s’abonner
-                    </Link>
+                <div className="d-flex flex-wrap gap-3">
+                    <button
+                        type="button"
+                        className="btn btn-primary btn-lg"
+                        onClick={handleReservation}
+                        disabled={reservationLoading || offer.availablePlaces <= 0}
+                    >
+                        {reservationLoading ? "Réservation..." : "Réserver cette offre"}
+                    </button>
+
+                    <button
+                        type="button"
+                        className="btn btn-outline-primary btn-lg"
+                        onClick={handleSubscription}
+                        disabled={subscriptionLoading || offer.availablePlaces <= 0}
+                    >
+                        {subscriptionLoading ? "Abonnement..." : "S’abonner à cette offre"}
+                    </button>
                 </div>
             </div>
         </div>
