@@ -1,7 +1,32 @@
-import { Link, Outlet } from "react-router-dom";
-import { Bus, User } from "lucide-react";
+import { Link, Outlet, useNavigate } from "react-router-dom";
+import { Bus, LogOut, User } from "lucide-react";
 
 export default function PublicLayout() {
+    const navigate = useNavigate();
+
+    const token = localStorage.getItem("token");
+    const role = localStorage.getItem("role");
+    const email = localStorage.getItem("email");
+
+    const isLoggedIn = Boolean(token);
+
+    const getDashboardPath = () => {
+        if (role === "ROLE_ADMIN") {
+            return "/admin/dashboard";
+        }
+
+        if (role === "ROLE_COMPANY") {
+            return "/company/dashboard";
+        }
+
+        return "/user/dashboard";
+    };
+
+    const handleLogout = () => {
+        localStorage.clear();
+        navigate("/login");
+    };
+
     return (
         <div className="app-shell">
             <nav className="navbar navbar-expand-lg bg-white border-bottom sticky-top">
@@ -20,14 +45,33 @@ export default function PublicLayout() {
                             Offres
                         </Link>
 
-                        <Link className="btn btn-outline-primary d-flex align-items-center gap-2" to="/login">
-                            <User size={18} />
-                            Connexion
-                        </Link>
+                        {!isLoggedIn ? (
+                            <>
+                                <Link className="btn btn-outline-primary d-flex align-items-center gap-2" to="/login">
+                                    <User size={18} />
+                                    Connexion
+                                </Link>
 
-                        <Link className="btn btn-primary" to="/register">
-                            Créer un compte
-                        </Link>
+                                <Link className="btn btn-primary" to="/register">
+                                    Créer un compte
+                                </Link>
+                            </>
+                        ) : (
+                            <>
+                                <Link className="btn btn-outline-primary" to={getDashboardPath()}>
+                                    Dashboard
+                                </Link>
+
+                                <span className="nav-user-email d-none d-lg-inline">
+                  {email}
+                </span>
+
+                                <button className="btn btn-danger d-flex align-items-center gap-2" onClick={handleLogout}>
+                                    <LogOut size={18} />
+                                    Déconnexion
+                                </button>
+                            </>
+                        )}
                     </div>
                 </div>
             </nav>

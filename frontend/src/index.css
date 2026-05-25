@@ -496,3 +496,12 @@ body {
 .empty-mini-box p {
   margin: 0;
 }
+
+.nav-user-email {
+  color: #64748b;
+  font-size: 14px;
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
