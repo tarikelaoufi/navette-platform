@@ -2,6 +2,23 @@ import { Link } from "react-router-dom";
 import { ArrowRight, Bus, Search, ShieldCheck } from "lucide-react";
 
 export default function HomePage() {
+    const token = localStorage.getItem("token");
+    const role = localStorage.getItem("role");
+
+    const isLoggedIn = Boolean(token);
+
+    const getDashboardPath = () => {
+        if (role === "ROLE_ADMIN") {
+            return "/admin/dashboard";
+        }
+
+        if (role === "ROLE_COMPANY") {
+            return "/company/dashboard";
+        }
+
+        return "/user/dashboard";
+    };
+
     return (
         <div>
             <section className="hero-section">
@@ -9,7 +26,7 @@ export default function HomePage() {
                     <div className="row align-items-center min-vh-75 py-5">
                         <div className="col-lg-7">
               <span className="badge bg-primary-subtle text-primary mb-3">
-                Plateforme de navettes des autocars
+                Plateforme intelligente de navettes
               </span>
 
                             <h1 className="display-4 fw-bold mb-4">
@@ -23,14 +40,26 @@ export default function HomePage() {
                             </p>
 
                             <div className="d-flex gap-3 flex-wrap">
-                                <Link to="/offers" className="btn btn-primary btn-lg d-flex align-items-center gap-2">
+                                <Link
+                                    to="/offers"
+                                    className="btn btn-primary btn-lg d-flex align-items-center gap-2"
+                                >
                                     Voir les offres
                                     <ArrowRight size={20} />
                                 </Link>
 
-                                <Link to="/register" className="btn btn-outline-primary btn-lg">
-                                    Créer un compte
-                                </Link>
+                                {!isLoggedIn ? (
+                                    <Link to="/register" className="btn btn-outline-primary btn-lg">
+                                        Créer un compte
+                                    </Link>
+                                ) : (
+                                    <Link
+                                        to={getDashboardPath()}
+                                        className="btn btn-outline-primary btn-lg"
+                                    >
+                                        Accéder au dashboard
+                                    </Link>
+                                )}
                             </div>
                         </div>
 
