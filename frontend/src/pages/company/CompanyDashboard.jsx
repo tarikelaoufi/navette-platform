@@ -101,6 +101,7 @@ export default function CompanyDashboard() {
                 </div>
 
                 <button
+                    type="button"
                     className="btn btn-outline-primary"
                     onClick={() => loadDashboardData({ showLoader: true })}
                     disabled={refreshing}
@@ -185,10 +186,12 @@ export default function CompanyDashboard() {
                       <Users size={16} />
                       Capacité : {shuttle.capacity} places
                     </span>
+
                                         <span>
                       <Bus size={16} />
                       Société : {shuttle.companyName}
                     </span>
+
                                         <span>
                       <MapPin size={16} />
                                             {shuttle.description || "Aucune description."}
@@ -232,14 +235,17 @@ export default function CompanyDashboard() {
                       <Clock size={16} />
                         {offer.departureTime} → {offer.arrivalTime}
                     </span>
+
                                         <span>
                       <CalendarDays size={16} />
                                             {offer.startDate} / {offer.endDate}
                     </span>
+
                                         <span>
                       <Users size={16} />
                       Places : {offer.availablePlaces} / {offer.totalPlaces}
                     </span>
+
                                         <span>
                       <Bus size={16} />
                       Navette : {offer.shuttleName}
@@ -285,10 +291,12 @@ export default function CompanyDashboard() {
                       <Clock size={16} />
                       Heure souhaitée : {demand.desiredTime}
                     </span>
+
                                         <span>
                       <Users size={16} />
                       Intéressés : {demand.interestedCount}
                     </span>
+
                                         <span>
                       <CalendarDays size={16} />
                       Créée le : {formatDateTime(demand.createdAt)}
