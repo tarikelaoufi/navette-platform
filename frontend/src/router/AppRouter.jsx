@@ -6,6 +6,8 @@ import ProtectedRoute from "../components/ProtectedRoute";
 
 import HomePage from "../pages/public/HomePage";
 import OffersPage from "../pages/public/OffersPage";
+import OfferDetailsPage from "../pages/public/OfferDetailsPage";
+import RegularReservationPage from "../pages/public/RegularReservationPage";
 
 import LoginPage from "../pages/auth/LoginPage";
 import RegisterPage from "../pages/auth/RegisterPage";
@@ -14,8 +16,6 @@ import UserDashboard from "../pages/user/UserDashboard";
 import CompanyDashboard from "../pages/company/CompanyDashboard";
 import AdminDashboard from "../pages/admin/AdminDashboard";
 
-import OfferDetailsPage from "../pages/public/OfferDetailsPage";
-
 export default function AppRouter() {
     return (
         <Routes>
@@ -23,6 +23,7 @@ export default function AppRouter() {
                 <Route path="/" element={<HomePage />} />
                 <Route path="/offers" element={<OffersPage />} />
                 <Route path="/offers/:id" element={<OfferDetailsPage />} />
+                <Route path="/regular-reservation" element={<RegularReservationPage />} />
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/register" element={<RegisterPage />} />
             </Route>

@@ -14,7 +14,7 @@ public class RegularReservation {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // User who created the regular reservation request
+    // User who created the regular shuttle request
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
@@ -42,6 +42,19 @@ public class RegularReservation {
     @Column(length = 500)
     private String notes;
 
+    // Requested shuttle options
+    @Column(nullable = false)
+    private Boolean hasWifi;
+
+    @Column(nullable = false)
+    private Boolean hasAirConditioning;
+
+    @Column(nullable = false)
+    private Boolean hasUsbCharger;
+
+    @Column(nullable = false)
+    private Boolean allowsLuggage;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)
     private RegularReservationStatus status;
@@ -54,6 +67,41 @@ public class RegularReservation {
 
         if (seats == null) {
             seats = 1;
+        }
+
+        if (hasWifi == null) {
+            hasWifi = false;
+        }
+
+        if (hasAirConditioning == null) {
+            hasAirConditioning = false;
+        }
+
+        if (hasUsbCharger == null) {
+            hasUsbCharger = false;
+        }
+
+        if (allowsLuggage == null) {
+            allowsLuggage = false;
+        }
+    }
+
+    @PreUpdate
+    public void beforeUpdate() {
+        if (hasWifi == null) {
+            hasWifi = false;
+        }
+
+        if (hasAirConditioning == null) {
+            hasAirConditioning = false;
+        }
+
+        if (hasUsbCharger == null) {
+            hasUsbCharger = false;
+        }
+
+        if (allowsLuggage == null) {
+            allowsLuggage = false;
         }
     }
 
@@ -100,6 +148,22 @@ public class RegularReservation {
         return notes;
     }
 
+    public Boolean getHasWifi() {
+        return hasWifi;
+    }
+
+    public Boolean getHasAirConditioning() {
+        return hasAirConditioning;
+    }
+
+    public Boolean getHasUsbCharger() {
+        return hasUsbCharger;
+    }
+
+    public Boolean getAllowsLuggage() {
+        return allowsLuggage;
+    }
+
     public RegularReservationStatus getStatus() {
         return status;
     }
@@ -142,6 +206,22 @@ public class RegularReservation {
 
     public void setNotes(String notes) {
         this.notes = notes;
+    }
+
+    public void setHasWifi(Boolean hasWifi) {
+        this.hasWifi = hasWifi;
+    }
+
+    public void setHasAirConditioning(Boolean hasAirConditioning) {
+        this.hasAirConditioning = hasAirConditioning;
+    }
+
+    public void setHasUsbCharger(Boolean hasUsbCharger) {
+        this.hasUsbCharger = hasUsbCharger;
+    }
+
+    public void setAllowsLuggage(Boolean allowsLuggage) {
+        this.allowsLuggage = allowsLuggage;
     }
 
     public void setStatus(RegularReservationStatus status) {

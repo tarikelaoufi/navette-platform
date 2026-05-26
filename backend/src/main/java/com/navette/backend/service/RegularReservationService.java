@@ -43,6 +43,12 @@ public class RegularReservationService {
         reservation.setEndDate(request.getEndDate());
         reservation.setSeats(request.getSeats());
         reservation.setNotes(request.getNotes());
+
+        reservation.setHasWifi(Boolean.TRUE.equals(request.getHasWifi()));
+        reservation.setHasAirConditioning(Boolean.TRUE.equals(request.getHasAirConditioning()));
+        reservation.setHasUsbCharger(Boolean.TRUE.equals(request.getHasUsbCharger()));
+        reservation.setAllowsLuggage(Boolean.TRUE.equals(request.getAllowsLuggage()));
+
         reservation.setStatus(RegularReservationStatus.PENDING);
 
         RegularReservation saved = regularReservationRepository.save(reservation);
@@ -155,6 +161,10 @@ public class RegularReservationService {
                 reservation.getEndDate(),
                 reservation.getSeats(),
                 reservation.getNotes(),
+                Boolean.TRUE.equals(reservation.getHasWifi()),
+                Boolean.TRUE.equals(reservation.getHasAirConditioning()),
+                Boolean.TRUE.equals(reservation.getHasUsbCharger()),
+                Boolean.TRUE.equals(reservation.getAllowsLuggage()),
                 reservation.getStatus()
         );
     }

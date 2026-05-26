@@ -1,5 +1,14 @@
 import { Link, Outlet, useNavigate } from "react-router-dom";
-import { Bus, Home, LogOut, Shield, User, Building2 } from "lucide-react";
+import {
+    Bus,
+    Home,
+    LogOut,
+    Shield,
+    User,
+    Building2,
+    CalendarDays,
+    Search,
+} from "lucide-react";
 
 export default function DashboardLayout({ role }) {
     const navigate = useNavigate();
@@ -33,7 +42,10 @@ export default function DashboardLayout({ role }) {
                 </Link>
 
                 <div className="dashboard-user-box">
-                    <div className="dashboard-avatar">{email?.charAt(0)?.toUpperCase() || "U"}</div>
+                    <div className="dashboard-avatar">
+                        {email?.charAt(0)?.toUpperCase() || "U"}
+                    </div>
+
                     <div>
                         <strong>{email || "Utilisateur"}</strong>
                         <small>{storedRole}</small>
@@ -46,10 +58,20 @@ export default function DashboardLayout({ role }) {
                         Accueil
                     </Link>
 
+                    <Link to="/offers" className="dashboard-link">
+                        <Search size={18} />
+                        Navettes disponibles
+                    </Link>
+
+                    <Link to="/regular-reservation" className="dashboard-link">
+                        <CalendarDays size={18} />
+                        Demander une navette
+                    </Link>
+
                     {role === "user" && (
                         <Link to="/user/dashboard" className="dashboard-link">
                             <User size={18} />
-                            Dashboard User
+                            Dashboard Utilisateur
                         </Link>
                     )}
 
@@ -68,7 +90,11 @@ export default function DashboardLayout({ role }) {
                     )}
                 </nav>
 
-                <button className="dashboard-logout" onClick={handleLogout}>
+                <button
+                    type="button"
+                    className="dashboard-logout"
+                    onClick={handleLogout}
+                >
                     <LogOut size={18} />
                     Déconnexion
                 </button>
@@ -81,9 +107,20 @@ export default function DashboardLayout({ role }) {
                         <p>Bienvenue dans votre espace de gestion.</p>
                     </div>
 
-                    <div className="dashboard-role-badge">
-                        {getIcon()}
-                        {storedRole}
+                    <div className="d-flex align-items-center gap-3">
+                        <div className="dashboard-role-badge">
+                            {getIcon()}
+                            {storedRole}
+                        </div>
+
+                        <button
+                            type="button"
+                            className="btn btn-danger d-flex align-items-center gap-2"
+                            onClick={handleLogout}
+                        >
+                            <LogOut size={18} />
+                            Déconnexion
+                        </button>
                     </div>
                 </header>
 

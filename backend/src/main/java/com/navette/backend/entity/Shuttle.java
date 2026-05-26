@@ -33,6 +33,18 @@ public class Shuttle {
     @Column(columnDefinition = "TEXT")
     private String description;
 
+    @Column(nullable = false)
+    private Boolean hasWifi;
+
+    @Column(nullable = false)
+    private Boolean hasAirConditioning;
+
+    @Column(nullable = false)
+    private Boolean hasUsbCharger;
+
+    @Column(nullable = false)
+    private Boolean allowsLuggage;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)
     private ShuttleStatus status;
@@ -41,6 +53,41 @@ public class Shuttle {
     public void beforeCreate() {
         if (status == null) {
             status = ShuttleStatus.ACTIVE;
+        }
+
+        if (hasWifi == null) {
+            hasWifi = false;
+        }
+
+        if (hasAirConditioning == null) {
+            hasAirConditioning = false;
+        }
+
+        if (hasUsbCharger == null) {
+            hasUsbCharger = false;
+        }
+
+        if (allowsLuggage == null) {
+            allowsLuggage = false;
+        }
+    }
+
+    @PreUpdate
+    public void beforeUpdate() {
+        if (hasWifi == null) {
+            hasWifi = false;
+        }
+
+        if (hasAirConditioning == null) {
+            hasAirConditioning = false;
+        }
+
+        if (hasUsbCharger == null) {
+            hasUsbCharger = false;
+        }
+
+        if (allowsLuggage == null) {
+            allowsLuggage = false;
         }
     }
 }

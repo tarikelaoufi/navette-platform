@@ -20,6 +20,12 @@ public class RegularReservationResponse {
     private LocalDate endDate;
     private Integer seats;
     private String notes;
+
+    private Boolean hasWifi;
+    private Boolean hasAirConditioning;
+    private Boolean hasUsbCharger;
+    private Boolean allowsLuggage;
+
     private RegularReservationStatus status;
 
     public RegularReservationResponse(
@@ -35,6 +41,10 @@ public class RegularReservationResponse {
             LocalDate endDate,
             Integer seats,
             String notes,
+            Boolean hasWifi,
+            Boolean hasAirConditioning,
+            Boolean hasUsbCharger,
+            Boolean allowsLuggage,
             RegularReservationStatus status
     ) {
         this.id = id;
@@ -49,6 +59,10 @@ public class RegularReservationResponse {
         this.endDate = endDate;
         this.seats = seats;
         this.notes = notes;
+        this.hasWifi = hasWifi;
+        this.hasAirConditioning = hasAirConditioning;
+        this.hasUsbCharger = hasUsbCharger;
+        this.allowsLuggage = allowsLuggage;
         this.status = status;
     }
 
@@ -98,6 +112,22 @@ public class RegularReservationResponse {
 
     public String getNotes() {
         return notes;
+    }
+
+    public Boolean getHasWifi() {
+        return hasWifi;
+    }
+
+    public Boolean getHasAirConditioning() {
+        return hasAirConditioning;
+    }
+
+    public Boolean getHasUsbCharger() {
+        return hasUsbCharger;
+    }
+
+    public Boolean getAllowsLuggage() {
+        return allowsLuggage;
     }
 
     public RegularReservationStatus getStatus() {

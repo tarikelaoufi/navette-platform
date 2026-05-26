@@ -3,6 +3,9 @@ import {
     Building2,
     Bus,
     CalendarCheck,
+    CalendarDays,
+    Clock,
+    MapPin,
     MessageSquareText,
     RefreshCw,
     Route,
@@ -44,7 +47,7 @@ export default function AdminDashboard() {
                 api.get("/api/admin/companies"),
                 api.get("/api/admin/offers"),
                 api.get("/api/admin/reservations"),
-                api.get("/api/admin/demands"),
+                api.get("/api/admin/regular-reservations"),
             ]);
 
             setStats(statsResponse.data);
@@ -71,7 +74,7 @@ export default function AdminDashboard() {
             api.get("/api/admin/companies"),
             api.get("/api/admin/offers"),
             api.get("/api/admin/reservations"),
-            api.get("/api/admin/demands"),
+            api.get("/api/admin/regular-reservations"),
         ])
             .then(
                 ([
@@ -128,13 +131,13 @@ export default function AdminDashboard() {
                     <h1 className="fw-bold mb-1">Tableau de bord administrateur</h1>
                     <p className="text-muted mb-0">
                         Vue globale sur les utilisateurs, sociétés, offres, réservations et
-                        demandes.
+                        demandes de navette.
                     </p>
                 </div>
 
                 <button
                     type="button"
-                    className="btn btn-outline-primary"
+                    className="btn btn-outline-primary d-flex align-items-center gap-2"
                     onClick={() => loadAdminData({ showLoader: true })}
                     disabled={refreshing}
                 >
@@ -152,14 +155,14 @@ export default function AdminDashboard() {
             <div className="row g-4 mb-4">
                 <StatCard
                     title="Utilisateurs"
-                    value={stats?.totalUsers || 0}
+                    value={stats?.totalUsers || users.length || 0}
                     icon={<Users size={24} />}
                     colorClass="bg-primary-subtle text-primary"
                 />
 
                 <StatCard
                     title="Sociétés"
-                    value={stats?.totalCompanies || 0}
+                    value={stats?.totalCompanies || companies.length || 0}
                     icon={<Building2 size={24} />}
                     colorClass="bg-success-subtle text-success"
                 />
@@ -173,7 +176,7 @@ export default function AdminDashboard() {
 
                 <StatCard
                     title="Offres"
-                    value={stats?.totalOffers || 0}
+                    value={stats?.totalOffers || offers.length || 0}
                     icon={<Route size={24} />}
                     colorClass="bg-warning-subtle text-warning"
                 />
@@ -187,14 +190,14 @@ export default function AdminDashboard() {
 
                 <StatCard
                     title="Réservations"
-                    value={stats?.totalReservations || 0}
+                    value={stats?.totalReservations || reservations.length || 0}
                     icon={<CalendarCheck size={24} />}
                     colorClass="bg-danger-subtle text-danger"
                 />
 
                 <StatCard
-                    title="Demandes"
-                    value={stats?.totalDemands || 0}
+                    title="Demandes de navette"
+                    value={stats?.totalDemands || demands.length || 0}
                     icon={<MessageSquareText size={24} />}
                     colorClass="bg-dark-subtle text-dark"
                 />
@@ -308,7 +311,11 @@ export default function AdminDashboard() {
                                             </p>
                                         </div>
 
-                                        <span className="badge bg-warning-subtle text-warning align-self-start">
+                                        <span
+                                            className={`badge align-self-start ${getOfferBadgeClass(
+                                                offer.status
+                                            )}`}
+                                        >
                       {offer.status}
                     </span>
                                     </div>
@@ -318,16 +325,21 @@ export default function AdminDashboard() {
                       Société :{" "}
                         {offer.company?.companyName || offer.companyName || "-"}
                     </span>
+
                                         <span>
                       Navette : {offer.shuttle?.name || offer.shuttleName || "-"}
                     </span>
+
                                         <span>
                       Horaire : {offer.departureTime} → {offer.arrivalTime}
                     </span>
+
                                         <span>
                       Période : {offer.startDate} / {offer.endDate}
                     </span>
+
                                         <span>Prix : {offer.price} MAD</span>
+
                                         <span>
                       Places : {offer.availablePlaces} / {offer.totalPlaces}
                     </span>
@@ -359,25 +371,46 @@ export default function AdminDashboard() {
                                                     reservation.offerTitle ||
                                                     `Réservation #${reservation.id}`}
                                             </h6>
+
                                             <p className="text-muted mb-2">
                                                 Utilisateur :{" "}
                                                 {reservation.user?.email ||
                                                     reservation.userEmail ||
-                                                    `ID ${reservation.user?.id || reservation.userId || "-"}`}
+                                                    `ID ${
+                                                        reservation.user?.id || reservation.userId || "-"
+                                                    }`}
                                             </p>
                                         </div>
 
-                                        <span className="badge bg-primary-subtle text-primary align-self-start">
+                                        <span
+                                            className={`badge align-self-start ${getReservationBadgeClass(
+                                                reservation.status
+                                            )}`}
+                                        >
                       {reservation.status}
                     </span>
                                     </div>
 
                                     <div className="mini-info">
+                    <span>
+                      Client :{" "}
+                        {reservation.userFullName ||
+                            reservation.user?.firstName ||
+                            "-"}
+                    </span>
+
+                                        <span>
+                      Trajet : {reservation.departureCityName || "-"} →{" "}
+                                            {reservation.arrivalCityName || "-"}
+                    </span>
+
                                         <span>Date trajet : {reservation.travelDate}</span>
+
                                         <span>
                       Date réservation :{" "}
                                             {formatDateTime(reservation.reservationDate)}
                     </span>
+
                                         <span>Montant : {reservation.amount} MAD</span>
                                     </div>
                                 </div>
@@ -389,12 +422,12 @@ export default function AdminDashboard() {
 
             <section className="dashboard-section">
                 <div className="section-header">
-                    <h4>Demandes</h4>
+                    <h4>Demandes de navette des utilisateurs</h4>
                     <span>{demands.length}</span>
                 </div>
 
                 {demands.length === 0 ? (
-                    <EmptyBox message="Aucune demande trouvée." />
+                    <EmptyBox message="Aucune demande de navette trouvée." />
                 ) : (
                     <div className="row g-3">
                         {demands.map((demand) => (
@@ -405,26 +438,69 @@ export default function AdminDashboard() {
                                             <h6 className="fw-bold mb-1">
                                                 {demand.departureCity?.name ||
                                                     demand.departureCityName ||
+                                                    demand.departureCity ||
                                                     "-"}{" "}
                                                 →{" "}
                                                 {demand.arrivalCity?.name ||
                                                     demand.arrivalCityName ||
+                                                    demand.arrivalCity ||
                                                     "-"}
                                             </h6>
+
                                             <p className="text-muted mb-2">
-                                                Période : {demand.period}
+                                                Utilisateur :{" "}
+                                                {demand.userFullName ||
+                                                    demand.userEmail ||
+                                                    `ID ${demand.userId || "-"}`}
                                             </p>
                                         </div>
 
-                                        <span className="badge bg-warning-subtle text-warning align-self-start">
+                                        <span
+                                            className={`badge align-self-start ${getDemandBadgeClass(
+                                                demand.status
+                                            )}`}
+                                        >
                       {demand.status}
                     </span>
                                     </div>
 
                                     <div className="mini-info">
-                                        <span>Heure souhaitée : {demand.desiredTime}</span>
-                                        <span>Intéressés : {demand.interestedCount}</span>
-                                        <span>Créée le : {formatDateTime(demand.createdAt)}</span>
+                    <span>
+                      <Clock size={16} />
+                      Heure souhaitée : {demand.desiredTime || "-"}
+                    </span>
+
+                                        <span>
+                      <Users size={16} />
+                      Places souhaitées : {demand.seats || 1}
+                    </span>
+
+                                        <span>
+                      <CalendarDays size={16} />
+                      Période : {demand.period || "-"}
+                    </span>
+
+                                        <span>
+                      <CalendarDays size={16} />
+                      Dates : {demand.startDate || "-"} /{" "}
+                                            {demand.endDate || "-"}
+                    </span>
+
+                                        {demand.notes && (
+                                            <span>
+                        <MapPin size={16} />
+                        Note : {demand.notes}
+                      </span>
+                                        )}
+
+                                        <OptionBadges
+                                            hasWifi={demand.hasWifi}
+                                            hasAirConditioning={demand.hasAirConditioning}
+                                            hasUsbCharger={demand.hasUsbCharger}
+                                            allowsLuggage={demand.allowsLuggage}
+                                            suffix=" demandé"
+                                            emptyText="Aucune option demandée"
+                                        />
                                     </div>
                                 </div>
                             </div>
@@ -451,6 +527,52 @@ function StatCard({ title, value, icon, colorClass }) {
     );
 }
 
+function OptionBadges({
+                          hasWifi,
+                          hasAirConditioning,
+                          hasUsbCharger,
+                          allowsLuggage,
+                          suffix = "",
+                          emptyText = "Aucune option",
+                      }) {
+    const hasAnyOption =
+        hasWifi || hasAirConditioning || hasUsbCharger || allowsLuggage;
+
+    return (
+        <div className="d-flex flex-wrap gap-2 mt-2">
+            {hasWifi && (
+                <span className="badge bg-info-subtle text-info">
+          Wi-Fi{suffix}
+        </span>
+            )}
+
+            {hasAirConditioning && (
+                <span className="badge bg-primary-subtle text-primary">
+          Climatisation{suffix}
+        </span>
+            )}
+
+            {hasUsbCharger && (
+                <span className="badge bg-success-subtle text-success">
+          USB{suffix}
+        </span>
+            )}
+
+            {allowsLuggage && (
+                <span className="badge bg-warning-subtle text-warning">
+          Bagages{suffix}
+        </span>
+            )}
+
+            {!hasAnyOption && (
+                <span className="badge bg-secondary-subtle text-secondary">
+          {emptyText}
+        </span>
+            )}
+        </div>
+    );
+}
+
 function EmptyBox({ message }) {
     return (
         <div className="empty-mini-box">
@@ -466,4 +588,60 @@ function formatDateTime(value) {
         dateStyle: "short",
         timeStyle: "short",
     });
+}
+
+function getReservationBadgeClass(status) {
+    if (status === "CONFIRMEE") {
+        return "bg-success-subtle text-success";
+    }
+
+    if (status === "EN_ATTENTE") {
+        return "bg-warning-subtle text-warning";
+    }
+
+    if (status === "REFUSEE") {
+        return "bg-danger-subtle text-danger";
+    }
+
+    if (status === "ANNULEE") {
+        return "bg-secondary-subtle text-secondary";
+    }
+
+    return "bg-primary-subtle text-primary";
+}
+
+function getDemandBadgeClass(status) {
+    if (status === "ACCEPTED") {
+        return "bg-success-subtle text-success";
+    }
+
+    if (status === "PENDING") {
+        return "bg-warning-subtle text-warning";
+    }
+
+    if (status === "REJECTED") {
+        return "bg-danger-subtle text-danger";
+    }
+
+    if (status === "CANCELLED") {
+        return "bg-secondary-subtle text-secondary";
+    }
+
+    return "bg-primary-subtle text-primary";
+}
+
+function getOfferBadgeClass(status) {
+    if (status === "OUVERTE") {
+        return "bg-success-subtle text-success";
+    }
+
+    if (status === "COMPLETE") {
+        return "bg-danger-subtle text-danger";
+    }
+
+    if (status === "FERMEE") {
+        return "bg-secondary-subtle text-secondary";
+    }
+
+    return "bg-warning-subtle text-warning";
 }

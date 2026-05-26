@@ -1,5 +1,5 @@
 import { Link, Outlet, useNavigate } from "react-router-dom";
-import { Bus, LogOut, User, CalendarDays } from "lucide-react";
+import { Bus, CalendarDays, LogOut, User } from "lucide-react";
 
 export default function PublicLayout() {
     const navigate = useNavigate();
@@ -53,7 +53,7 @@ export default function PublicLayout() {
                             to="/regular-reservation"
                         >
                             <CalendarDays size={17} />
-                            Réservation régulière
+                            Demander une navette
                         </Link>
 
                         {!isLoggedIn ? (
@@ -77,10 +77,11 @@ export default function PublicLayout() {
                                 </Link>
 
                                 <span className="nav-user-email d-none d-lg-inline">
-                                    {email}
-                                </span>
+                  {email}
+                </span>
 
                                 <button
+                                    type="button"
                                     className="btn btn-danger d-flex align-items-center gap-2"
                                     onClick={handleLogout}
                                 >

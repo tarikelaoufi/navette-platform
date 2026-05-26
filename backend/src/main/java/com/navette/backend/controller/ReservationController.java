@@ -2,6 +2,7 @@ package com.navette.backend.controller;
 
 import com.navette.backend.dto.ReservationRequest;
 import com.navette.backend.dto.ReservationResponse;
+import com.navette.backend.enums.ReservationStatus;
 import com.navette.backend.service.ReservationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +24,19 @@ public class ReservationController {
     @GetMapping("/api/user/reservations")
     public List<ReservationResponse> getUserReservations(@RequestParam Long userId) {
         return reservationService.getUserReservations(userId);
+    }
+
+    @GetMapping("/api/company/reservations")
+    public List<ReservationResponse> getCompanyReservations(@RequestParam Long companyId) {
+        return reservationService.getCompanyReservations(companyId);
+    }
+
+    @PutMapping("/api/company/reservations/{id}/status")
+    public ReservationResponse updateReservationStatus(
+            @PathVariable Long id,
+            @RequestParam ReservationStatus status
+    ) {
+        return reservationService.updateReservationStatus(id, status);
     }
 
     @GetMapping("/api/company/offers/{offerId}/reservations")

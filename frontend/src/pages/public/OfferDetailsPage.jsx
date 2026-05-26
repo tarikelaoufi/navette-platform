@@ -63,7 +63,7 @@ export default function OfferDetailsPage() {
         }
 
         if (role !== "ROLE_USER") {
-            setError("Seul un utilisateur peut réserver ou s’abonner à une offre.");
+            setError("Seul un utilisateur peut réserver ou s’abonner à une navette.");
             return false;
         }
 
@@ -91,7 +91,7 @@ export default function OfferDetailsPage() {
                 travelDate,
             });
 
-            setSuccess("Réservation effectuée avec succès.");
+            setSuccess("Billet réservé avec succès.");
 
             const response = await api.get(`/api/offers/${id}`);
             setOffer(response.data);
@@ -100,7 +100,7 @@ export default function OfferDetailsPage() {
             setError(
                 error.response?.data?.message ||
                 error.response?.data?.error ||
-                "Impossible d’effectuer la réservation."
+                "Impossible de réserver le billet."
             );
         } finally {
             setReservationLoading(false);
@@ -124,7 +124,7 @@ export default function OfferDetailsPage() {
                 endDate: offer.endDate,
             });
 
-            setSuccess("Abonnement effectué avec succès.");
+            setSuccess("Abonnement à la navette effectué avec succès.");
 
             const response = await api.get(`/api/offers/${id}`);
             setOffer(response.data);
@@ -133,7 +133,7 @@ export default function OfferDetailsPage() {
             setError(
                 error.response?.data?.message ||
                 error.response?.data?.error ||
-                "Impossible d’effectuer l’abonnement."
+                "Impossible de s’abonner à la navette."
             );
         } finally {
             setSubscriptionLoading(false);
@@ -155,7 +155,7 @@ export default function OfferDetailsPage() {
                 <div className="alert alert-danger">{error}</div>
 
                 <Link to="/offers" className="btn btn-outline-primary">
-                    Retour aux offres
+                    Retour aux navettes
                 </Link>
             </div>
         );
@@ -167,7 +167,7 @@ export default function OfferDetailsPage() {
                 <div className="alert alert-danger">Offre introuvable.</div>
 
                 <Link to="/offers" className="btn btn-outline-primary">
-                    Retour aux offres
+                    Retour aux navettes
                 </Link>
             </div>
         );
@@ -177,7 +177,7 @@ export default function OfferDetailsPage() {
         <div className="container py-5">
             <Link to="/offers" className="btn btn-link text-decoration-none mb-4 px-0">
                 <ArrowLeft size={18} />
-                Retour aux offres
+                Retour aux navettes
             </Link>
 
             <div className="offer-details-card">
@@ -299,7 +299,7 @@ export default function OfferDetailsPage() {
                         onClick={handleReservation}
                         disabled={reservationLoading || offer.availablePlaces <= 0}
                     >
-                        {reservationLoading ? "Réservation..." : "Réserver cette offre"}
+                        {reservationLoading ? "Réservation..." : "Réserver un billet"}
                     </button>
 
                     <button
@@ -308,7 +308,7 @@ export default function OfferDetailsPage() {
                         onClick={handleSubscription}
                         disabled={subscriptionLoading || offer.availablePlaces <= 0}
                     >
-                        {subscriptionLoading ? "Abonnement..." : "S’abonner à cette offre"}
+                        {subscriptionLoading ? "Abonnement..." : "S’abonner à la navette"}
                     </button>
                 </div>
             </div>

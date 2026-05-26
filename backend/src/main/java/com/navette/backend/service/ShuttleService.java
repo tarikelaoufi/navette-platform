@@ -28,6 +28,10 @@ public class ShuttleService {
                 .type(request.getType())
                 .capacity(request.getCapacity())
                 .description(request.getDescription())
+                .hasWifi(Boolean.TRUE.equals(request.getHasWifi()))
+                .hasAirConditioning(Boolean.TRUE.equals(request.getHasAirConditioning()))
+                .hasUsbCharger(Boolean.TRUE.equals(request.getHasUsbCharger()))
+                .allowsLuggage(Boolean.TRUE.equals(request.getAllowsLuggage()))
                 .build();
 
         Shuttle savedShuttle = shuttleRepository.save(shuttle);
@@ -61,6 +65,10 @@ public class ShuttleService {
         shuttle.setType(request.getType());
         shuttle.setCapacity(request.getCapacity());
         shuttle.setDescription(request.getDescription());
+        shuttle.setHasWifi(Boolean.TRUE.equals(request.getHasWifi()));
+        shuttle.setHasAirConditioning(Boolean.TRUE.equals(request.getHasAirConditioning()));
+        shuttle.setHasUsbCharger(Boolean.TRUE.equals(request.getHasUsbCharger()));
+        shuttle.setAllowsLuggage(Boolean.TRUE.equals(request.getAllowsLuggage()));
 
         Shuttle updatedShuttle = shuttleRepository.save(shuttle);
 
@@ -84,6 +92,10 @@ public class ShuttleService {
                 .type(shuttle.getType())
                 .capacity(shuttle.getCapacity())
                 .description(shuttle.getDescription())
+                .hasWifi(Boolean.TRUE.equals(shuttle.getHasWifi()))
+                .hasAirConditioning(Boolean.TRUE.equals(shuttle.getHasAirConditioning()))
+                .hasUsbCharger(Boolean.TRUE.equals(shuttle.getHasUsbCharger()))
+                .allowsLuggage(Boolean.TRUE.equals(shuttle.getAllowsLuggage()))
                 .status(shuttle.getStatus())
                 .build();
     }

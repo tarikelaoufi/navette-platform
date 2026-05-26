@@ -23,4 +23,12 @@ public class ShuttleRequest {
     private Integer capacity;
 
     private String description;
+
+    private Boolean hasWifi;
+
+    private Boolean hasAirConditioning;
+
+    private Boolean hasUsbCharger;
+
+    private Boolean allowsLuggage;
 }

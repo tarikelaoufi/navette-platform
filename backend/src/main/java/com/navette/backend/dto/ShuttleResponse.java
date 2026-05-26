@@ -15,9 +15,16 @@ public class ShuttleResponse {
     private Long id;
     private Long companyId;
     private String companyName;
+
     private String name;
     private String type;
     private Integer capacity;
     private String description;
+
+    private Boolean hasWifi;
+    private Boolean hasAirConditioning;
+    private Boolean hasUsbCharger;
+    private Boolean allowsLuggage;
+
     private ShuttleStatus status;
 }

@@ -16,6 +16,7 @@ export default function CompanyDashboard() {
 
     const [shuttles, setShuttles] = useState([]);
     const [offers, setOffers] = useState([]);
+    const [reservations, setReservations] = useState([]);
     const [demands, setDemands] = useState([]);
     const [cities, setCities] = useState([]);
 
@@ -24,6 +25,10 @@ export default function CompanyDashboard() {
         type: "",
         capacity: "",
         description: "",
+        hasWifi: false,
+        hasAirConditioning: false,
+        hasUsbCharger: false,
+        allowsLuggage: false,
     });
 
     const [offerForm, setOfferForm] = useState({
@@ -45,6 +50,8 @@ export default function CompanyDashboard() {
 
     const [creatingShuttle, setCreatingShuttle] = useState(false);
     const [creatingOffer, setCreatingOffer] = useState(false);
+    const [updatingReservationId, setUpdatingReservationId] = useState(null);
+    const [updatingDemandId, setUpdatingDemandId] = useState(null);
 
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
@@ -57,16 +64,23 @@ export default function CompanyDashboard() {
         setError("");
 
         try {
-            const [shuttlesResponse, offersResponse, demandsResponse, citiesResponse] =
-                await Promise.all([
-                    api.get(`/api/company/shuttles?companyId=${companyId}`),
-                    api.get(`/api/company/offers?companyId=${companyId}`),
-                    api.get("/api/company/demands"),
-                    api.get("/api/cities"),
-                ]);
+            const [
+                shuttlesResponse,
+                offersResponse,
+                reservationsResponse,
+                demandsResponse,
+                citiesResponse,
+            ] = await Promise.all([
+                api.get(`/api/company/shuttles?companyId=${companyId}`),
+                api.get(`/api/company/offers?companyId=${companyId}`),
+                api.get(`/api/company/reservations?companyId=${companyId}`),
+                api.get("/api/company/regular-reservations"),
+                api.get("/api/cities"),
+            ]);
 
             setShuttles(shuttlesResponse.data);
             setOffers(offersResponse.data);
+            setReservations(reservationsResponse.data);
             setDemands(demandsResponse.data);
             setCities(citiesResponse.data);
         } catch (error) {
@@ -84,17 +98,27 @@ export default function CompanyDashboard() {
         Promise.all([
             api.get(`/api/company/shuttles?companyId=${companyId}`),
             api.get(`/api/company/offers?companyId=${companyId}`),
-            api.get("/api/company/demands"),
+            api.get(`/api/company/reservations?companyId=${companyId}`),
+            api.get("/api/company/regular-reservations"),
             api.get("/api/cities"),
         ])
-            .then(([shuttlesResponse, offersResponse, demandsResponse, citiesResponse]) => {
-                if (!isMounted) return;
+            .then(
+                ([
+                     shuttlesResponse,
+                     offersResponse,
+                     reservationsResponse,
+                     demandsResponse,
+                     citiesResponse,
+                 ]) => {
+                    if (!isMounted) return;
 
-                setShuttles(shuttlesResponse.data);
-                setOffers(offersResponse.data);
-                setDemands(demandsResponse.data);
-                setCities(citiesResponse.data);
-            })
+                    setShuttles(shuttlesResponse.data);
+                    setOffers(offersResponse.data);
+                    setReservations(reservationsResponse.data);
+                    setDemands(demandsResponse.data);
+                    setCities(citiesResponse.data);
+                }
+            )
             .catch((error) => {
                 console.error("COMPANY DASHBOARD ERROR:", error);
 
@@ -114,11 +138,11 @@ export default function CompanyDashboard() {
     }, []);
 
     const handleShuttleChange = (event) => {
-        const { name, value } = event.target;
+        const { name, value, type, checked } = event.target;
 
         setShuttleForm((previousForm) => ({
             ...previousForm,
-            [name]: value,
+            [name]: type === "checkbox" ? checked : value,
         }));
     };
 
@@ -145,6 +169,10 @@ export default function CompanyDashboard() {
                 type: shuttleForm.type,
                 capacity: Number(shuttleForm.capacity),
                 description: shuttleForm.description,
+                hasWifi: shuttleForm.hasWifi,
+                hasAirConditioning: shuttleForm.hasAirConditioning,
+                hasUsbCharger: shuttleForm.hasUsbCharger,
+                allowsLuggage: shuttleForm.allowsLuggage,
             });
 
             setSuccess("Navette créée avec succès.");
@@ -154,6 +182,10 @@ export default function CompanyDashboard() {
                 type: "",
                 capacity: "",
                 description: "",
+                hasWifi: false,
+                hasAirConditioning: false,
+                hasUsbCharger: false,
+                allowsLuggage: false,
             });
 
             await loadDashboardData();
@@ -226,6 +258,62 @@ export default function CompanyDashboard() {
         }
     };
 
+    const handleUpdateReservationStatus = async (reservationId, status) => {
+        setUpdatingReservationId(reservationId);
+        setError("");
+        setSuccess("");
+
+        try {
+            await api.put(`/api/company/reservations/${reservationId}/status?status=${status}`);
+
+            if (status === "CONFIRMEE") {
+                setSuccess("Réservation acceptée avec succès.");
+            } else if (status === "REFUSEE") {
+                setSuccess("Réservation refusée avec succès.");
+            } else if (status === "ANNULEE") {
+                setSuccess("Réservation annulée avec succès.");
+            }
+
+            await loadDashboardData();
+        } catch (error) {
+            console.error("UPDATE RESERVATION STATUS ERROR:", error);
+            setError(
+                error.response?.data?.message ||
+                error.response?.data?.error ||
+                "Impossible de modifier le statut de la réservation."
+            );
+        } finally {
+            setUpdatingReservationId(null);
+        }
+    };
+
+    const handleUpdateDemandStatus = async (demandId, status) => {
+        setUpdatingDemandId(demandId);
+        setError("");
+        setSuccess("");
+
+        try {
+            await api.put(`/api/company/regular-reservations/${demandId}/status?status=${status}`);
+
+            if (status === "ACCEPTED") {
+                setSuccess("Demande de navette acceptée avec succès.");
+            } else if (status === "REJECTED") {
+                setSuccess("Demande de navette refusée avec succès.");
+            }
+
+            await loadDashboardData();
+        } catch (error) {
+            console.error("UPDATE DEMAND STATUS ERROR:", error);
+            setError(
+                error.response?.data?.message ||
+                error.response?.data?.error ||
+                "Impossible de modifier le statut de la demande."
+            );
+        } finally {
+            setUpdatingDemandId(null);
+        }
+    };
+
     if (loading) {
         return (
             <div className="text-center py-5">
@@ -241,13 +329,13 @@ export default function CompanyDashboard() {
                 <div>
                     <h1 className="fw-bold mb-1">Tableau de bord société</h1>
                     <p className="text-muted mb-0">
-                        Gérez vos navettes, vos offres et consultez les demandes ouvertes.
+                        Gérez vos navettes, vos offres, les réservations clients et les demandes de navette.
                     </p>
                 </div>
 
                 <button
                     type="button"
-                    className="btn btn-outline-primary"
+                    className="btn btn-outline-primary d-flex align-items-center gap-2"
                     onClick={() => loadDashboardData({ showLoader: true })}
                     disabled={refreshing}
                 >
@@ -269,7 +357,7 @@ export default function CompanyDashboard() {
             )}
 
             <div className="row g-4 mb-4">
-                <div className="col-md-4">
+                <div className="col-md-3">
                     <div className="dashboard-stat-card">
                         <div className="stat-icon bg-primary-subtle text-primary">
                             <Bus size={24} />
@@ -281,7 +369,7 @@ export default function CompanyDashboard() {
                     </div>
                 </div>
 
-                <div className="col-md-4">
+                <div className="col-md-3">
                     <div className="dashboard-stat-card">
                         <div className="stat-icon bg-success-subtle text-success">
                             <Route size={24} />
@@ -293,13 +381,25 @@ export default function CompanyDashboard() {
                     </div>
                 </div>
 
-                <div className="col-md-4">
+                <div className="col-md-3">
+                    <div className="dashboard-stat-card">
+                        <div className="stat-icon bg-info-subtle text-info">
+                            <CalendarDays size={24} />
+                        </div>
+                        <div>
+                            <small>Réservations</small>
+                            <strong>{reservations.length}</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="col-md-3">
                     <div className="dashboard-stat-card">
                         <div className="stat-icon bg-warning-subtle text-warning">
                             <Users size={24} />
                         </div>
                         <div>
-                            <small>Demandes ouvertes</small>
+                            <small>Demandes</small>
                             <strong>{demands.length}</strong>
                         </div>
                     </div>
@@ -363,6 +463,46 @@ export default function CompanyDashboard() {
                                 value={shuttleForm.description}
                                 onChange={handleShuttleChange}
                             />
+                        </div>
+
+                        <div className="col-12">
+                            <label className="form-label fw-semibold mb-3">
+                                Options de la navette
+                            </label>
+
+                            <div className="row g-3">
+                                <OptionCheckbox
+                                    id="hasWifi"
+                                    name="hasWifi"
+                                    label="Wi-Fi"
+                                    checked={shuttleForm.hasWifi}
+                                    onChange={handleShuttleChange}
+                                />
+
+                                <OptionCheckbox
+                                    id="hasAirConditioning"
+                                    name="hasAirConditioning"
+                                    label="Climatisation"
+                                    checked={shuttleForm.hasAirConditioning}
+                                    onChange={handleShuttleChange}
+                                />
+
+                                <OptionCheckbox
+                                    id="hasUsbCharger"
+                                    name="hasUsbCharger"
+                                    label="Chargeur USB"
+                                    checked={shuttleForm.hasUsbCharger}
+                                    onChange={handleShuttleChange}
+                                />
+
+                                <OptionCheckbox
+                                    id="allowsLuggage"
+                                    name="allowsLuggage"
+                                    label="Bagages"
+                                    checked={shuttleForm.allowsLuggage}
+                                    onChange={handleShuttleChange}
+                                />
+                            </div>
                         </div>
 
                         <div className="col-12">
@@ -554,6 +694,124 @@ export default function CompanyDashboard() {
 
             <section className="dashboard-section mb-4">
                 <div className="section-header">
+                    <h4>Réservations des clients</h4>
+                    <span>{reservations.length}</span>
+                </div>
+
+                {reservations.length === 0 ? (
+                    <EmptyBox message="Aucune réservation client trouvée." />
+                ) : (
+                    <div className="row g-3">
+                        {reservations.map((reservation) => (
+                            <div className="col-lg-6" key={reservation.id}>
+                                <div className="mini-card">
+                                    <div className="d-flex justify-content-between gap-3">
+                                        <div>
+                                            <h6 className="fw-bold mb-1">
+                                                {reservation.offerTitle}
+                                            </h6>
+
+                                            <p className="text-muted mb-2">
+                                                {reservation.departureCityName} → {reservation.arrivalCityName}
+                                            </p>
+                                        </div>
+
+                                        <span
+                                            className={`badge align-self-start ${getReservationBadgeClass(
+                                                reservation.status
+                                            )}`}
+                                        >
+                      {reservation.status}
+                    </span>
+                                    </div>
+
+                                    <div className="mini-info">
+                    <span>
+                      <Users size={16} />
+                      Client : {reservation.userFullName}
+                    </span>
+
+                                        <span>
+                      <CalendarDays size={16} />
+                      Date du trajet : {reservation.travelDate}
+                    </span>
+
+                                        <span>
+                      <Clock size={16} />
+                      Réservée le : {formatDateTime(reservation.reservationDate)}
+                    </span>
+
+                                        <span>
+                      <Bus size={16} />
+                      Montant : {reservation.amount} MAD
+                    </span>
+                                    </div>
+
+                                    <div className="d-flex flex-wrap gap-2 mt-3">
+                                        {reservation.status === "EN_ATTENTE" && (
+                                            <>
+                                                <button
+                                                    type="button"
+                                                    className="btn btn-success btn-sm"
+                                                    disabled={updatingReservationId === reservation.id}
+                                                    onClick={() =>
+                                                        handleUpdateReservationStatus(
+                                                            reservation.id,
+                                                            "CONFIRMEE"
+                                                        )
+                                                    }
+                                                >
+                                                    Accepter
+                                                </button>
+
+                                                <button
+                                                    type="button"
+                                                    className="btn btn-outline-danger btn-sm"
+                                                    disabled={updatingReservationId === reservation.id}
+                                                    onClick={() =>
+                                                        handleUpdateReservationStatus(
+                                                            reservation.id,
+                                                            "REFUSEE"
+                                                        )
+                                                    }
+                                                >
+                                                    Refuser
+                                                </button>
+                                            </>
+                                        )}
+
+                                        {reservation.status === "CONFIRMEE" && (
+                                            <button
+                                                type="button"
+                                                className="btn btn-outline-secondary btn-sm"
+                                                disabled={updatingReservationId === reservation.id}
+                                                onClick={() =>
+                                                    handleUpdateReservationStatus(
+                                                        reservation.id,
+                                                        "ANNULEE"
+                                                    )
+                                                }
+                                            >
+                                                Annuler
+                                            </button>
+                                        )}
+
+                                        {(reservation.status === "REFUSEE" ||
+                                            reservation.status === "ANNULEE") && (
+                                            <span className="text-muted small">
+                        Aucune action disponible
+                      </span>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </section>
+
+            <section className="dashboard-section mb-4">
+                <div className="section-header">
                     <h4>Mes navettes</h4>
                     <span>{shuttles.length}</span>
                 </div>
@@ -593,6 +851,14 @@ export default function CompanyDashboard() {
                       <MapPin size={16} />
                                             {shuttle.description || "Aucune description."}
                     </span>
+
+                                        <OptionBadges
+                                            hasWifi={shuttle.hasWifi}
+                                            hasAirConditioning={shuttle.hasAirConditioning}
+                                            hasUsbCharger={shuttle.hasUsbCharger}
+                                            allowsLuggage={shuttle.allowsLuggage}
+                                            emptyText="Aucune option"
+                                        />
                                     </div>
                                 </div>
                             </div>
@@ -657,12 +923,12 @@ export default function CompanyDashboard() {
 
             <section className="dashboard-section">
                 <div className="section-header">
-                    <h4>Demandes ouvertes des utilisateurs</h4>
+                    <h4>Demandes de navette des utilisateurs</h4>
                     <span>{demands.length}</span>
                 </div>
 
                 {demands.length === 0 ? (
-                    <EmptyBox message="Aucune demande ouverte trouvée." />
+                    <EmptyBox message="Aucune demande de navette trouvée." />
                 ) : (
                     <div className="row g-3">
                         {demands.map((demand) => (
@@ -671,14 +937,20 @@ export default function CompanyDashboard() {
                                     <div className="d-flex justify-content-between gap-3">
                                         <div>
                                             <h6 className="fw-bold mb-1">
-                                                {demand.departureCityName} → {demand.arrivalCityName}
+                                                {demand.departureCityName || demand.departureCity} →{" "}
+                                                {demand.arrivalCityName || demand.arrivalCity}
                                             </h6>
+
                                             <p className="text-muted mb-2">
                                                 Période : {demand.period}
                                             </p>
                                         </div>
 
-                                        <span className="badge bg-warning-subtle text-warning align-self-start">
+                                        <span
+                                            className={`badge align-self-start ${getDemandBadgeClass(
+                                                demand.status
+                                            )}`}
+                                        >
                       {demand.status}
                     </span>
                                     </div>
@@ -691,13 +963,65 @@ export default function CompanyDashboard() {
 
                                         <span>
                       <Users size={16} />
-                      Intéressés : {demand.interestedCount}
+                      Places souhaitées : {demand.seats || demand.interestedCount || 1}
                     </span>
 
                                         <span>
                       <CalendarDays size={16} />
-                      Créée le : {formatDateTime(demand.createdAt)}
+                                            {demand.startDate && demand.endDate
+                                                ? `${demand.startDate} / ${demand.endDate}`
+                                                : `Créée le : ${formatDateTime(demand.createdAt)}`}
                     </span>
+
+                                        {demand.notes && (
+                                            <span>
+                        <MapPin size={16} />
+                                                {demand.notes}
+                      </span>
+                                        )}
+
+                                        <OptionBadges
+                                            hasWifi={demand.hasWifi}
+                                            hasAirConditioning={demand.hasAirConditioning}
+                                            hasUsbCharger={demand.hasUsbCharger}
+                                            allowsLuggage={demand.allowsLuggage}
+                                            suffix=" demandé"
+                                            emptyText="Aucune option demandée"
+                                        />
+                                    </div>
+
+                                    <div className="d-flex flex-wrap gap-2 mt-3">
+                                        {demand.status === "PENDING" && (
+                                            <>
+                                                <button
+                                                    type="button"
+                                                    className="btn btn-success btn-sm"
+                                                    disabled={updatingDemandId === demand.id}
+                                                    onClick={() =>
+                                                        handleUpdateDemandStatus(demand.id, "ACCEPTED")
+                                                    }
+                                                >
+                                                    Accepter
+                                                </button>
+
+                                                <button
+                                                    type="button"
+                                                    className="btn btn-outline-danger btn-sm"
+                                                    disabled={updatingDemandId === demand.id}
+                                                    onClick={() =>
+                                                        handleUpdateDemandStatus(demand.id, "REJECTED")
+                                                    }
+                                                >
+                                                    Refuser
+                                                </button>
+                                            </>
+                                        )}
+
+                                        {demand.status !== "PENDING" && (
+                                            <span className="text-muted small">
+                        Aucune action disponible
+                      </span>
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -705,6 +1029,73 @@ export default function CompanyDashboard() {
                     </div>
                 )}
             </section>
+        </div>
+    );
+}
+
+function OptionCheckbox({ id, name, label, checked, onChange }) {
+    return (
+        <div className="col-md-3">
+            <div className="form-check border rounded p-3">
+                <input
+                    type="checkbox"
+                    className="form-check-input"
+                    id={id}
+                    name={name}
+                    checked={checked}
+                    onChange={onChange}
+                />
+
+                <label className="form-check-label ms-2" htmlFor={id}>
+                    {label}
+                </label>
+            </div>
+        </div>
+    );
+}
+
+function OptionBadges({
+                          hasWifi,
+                          hasAirConditioning,
+                          hasUsbCharger,
+                          allowsLuggage,
+                          suffix = "",
+                          emptyText = "Aucune option",
+                      }) {
+    const hasAnyOption =
+        hasWifi || hasAirConditioning || hasUsbCharger || allowsLuggage;
+
+    return (
+        <div className="d-flex flex-wrap gap-2 mt-2">
+            {hasWifi && (
+                <span className="badge bg-info-subtle text-info">
+          Wi-Fi{suffix}
+        </span>
+            )}
+
+            {hasAirConditioning && (
+                <span className="badge bg-primary-subtle text-primary">
+          Climatisation{suffix}
+        </span>
+            )}
+
+            {hasUsbCharger && (
+                <span className="badge bg-success-subtle text-success">
+          USB{suffix}
+        </span>
+            )}
+
+            {allowsLuggage && (
+                <span className="badge bg-warning-subtle text-warning">
+          Bagages{suffix}
+        </span>
+            )}
+
+            {!hasAnyOption && (
+                <span className="badge bg-secondary-subtle text-secondary">
+          {emptyText}
+        </span>
+            )}
         </div>
     );
 }
@@ -724,4 +1115,44 @@ function formatDateTime(value) {
         dateStyle: "short",
         timeStyle: "short",
     });
+}
+
+function getReservationBadgeClass(status) {
+    if (status === "CONFIRMEE") {
+        return "bg-success-subtle text-success";
+    }
+
+    if (status === "EN_ATTENTE") {
+        return "bg-warning-subtle text-warning";
+    }
+
+    if (status === "REFUSEE") {
+        return "bg-danger-subtle text-danger";
+    }
+
+    if (status === "ANNULEE") {
+        return "bg-secondary-subtle text-secondary";
+    }
+
+    return "bg-primary-subtle text-primary";
+}
+
+function getDemandBadgeClass(status) {
+    if (status === "ACCEPTED") {
+        return "bg-success-subtle text-success";
+    }
+
+    if (status === "PENDING") {
+        return "bg-warning-subtle text-warning";
+    }
+
+    if (status === "REJECTED") {
+        return "bg-danger-subtle text-danger";
+    }
+
+    if (status === "CANCELLED") {
+        return "bg-secondary-subtle text-secondary";
+    }
+
+    return "bg-primary-subtle text-primary";
 }

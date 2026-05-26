@@ -51,23 +51,16 @@ public class ReservationService {
                 .user(user)
                 .offer(offer)
                 .travelDate(request.getTravelDate())
-                .status(ReservationStatus.CONFIRMEE)
+                .status(ReservationStatus.EN_ATTENTE)
                 .amount(offer.getPrice())
                 .build();
 
         Reservation savedReservation = reservationRepository.save(reservation);
 
-        offer.setAvailablePlaces(offer.getAvailablePlaces() - 1);
-
-        if (offer.getAvailablePlaces() <= 0) {
-            offer.setStatus(OfferStatus.COMPLETE);
-        }
-
-        offerRepository.save(offer);
-
         return mapToResponse(savedReservation);
     }
 
+    @Transactional(readOnly = true)
     public List<ReservationResponse> getUserReservations(Long userId) {
         return reservationRepository.findByUserId(userId)
                 .stream()
@@ -75,6 +68,7 @@ public class ReservationService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
     public List<ReservationResponse> getOfferReservations(Long offerId) {
         return reservationRepository.findByOfferId(offerId)
                 .stream()
@@ -82,6 +76,15 @@ public class ReservationService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
+    public List<ReservationResponse> getCompanyReservations(Long companyId) {
+        return reservationRepository.findByCompanyId(companyId)
+                .stream()
+                .map(this::mapToResponse)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
     public ReservationResponse getReservationById(Long id) {
         Reservation reservation = reservationRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Reservation not found"));
@@ -90,20 +93,89 @@ public class ReservationService {
     }
 
     @Transactional
+    public ReservationResponse updateReservationStatus(Long id, ReservationStatus status) {
+        Reservation reservation = reservationRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Reservation not found"));
+
+        Offer offer = reservation.getOffer();
+
+        if (reservation.getStatus() == ReservationStatus.ANNULEE) {
+            throw new RuntimeException("Cancelled reservation cannot be updated");
+        }
+
+        if (reservation.getStatus() == ReservationStatus.REFUSEE) {
+            throw new RuntimeException("Rejected reservation cannot be updated");
+        }
+
+        if (status == ReservationStatus.EN_ATTENTE) {
+            throw new RuntimeException("Cannot set reservation back to pending");
+        }
+
+        if (status == ReservationStatus.CONFIRMEE) {
+            confirmReservation(reservation, offer);
+        } else if (status == ReservationStatus.REFUSEE) {
+            refuseReservation(reservation);
+        } else if (status == ReservationStatus.ANNULEE) {
+            cancelReservationInternal(reservation, offer);
+        } else {
+            throw new RuntimeException("Invalid reservation status");
+        }
+
+        return mapToResponse(reservationRepository.save(reservation));
+    }
+
+    @Transactional
     public void cancelReservation(Long id) {
         Reservation reservation = reservationRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Reservation not found"));
 
+        Offer offer = reservation.getOffer();
+
+        cancelReservationInternal(reservation, offer);
+
+        reservationRepository.save(reservation);
+    }
+
+    private void confirmReservation(Reservation reservation, Offer offer) {
+        if (reservation.getStatus() == ReservationStatus.CONFIRMEE) {
+            return;
+        }
+
+        if (offer.getAvailablePlaces() == null || offer.getAvailablePlaces() <= 0) {
+            offer.setStatus(OfferStatus.COMPLETE);
+            offerRepository.save(offer);
+            throw new RuntimeException("Offer is complete");
+        }
+
+        reservation.setStatus(ReservationStatus.CONFIRMEE);
+
+        offer.setAvailablePlaces(offer.getAvailablePlaces() - 1);
+
+        if (offer.getAvailablePlaces() <= 0) {
+            offer.setStatus(OfferStatus.COMPLETE);
+        }
+
+        offerRepository.save(offer);
+    }
+
+    private void refuseReservation(Reservation reservation) {
+        if (reservation.getStatus() == ReservationStatus.CONFIRMEE) {
+            throw new RuntimeException("Confirmed reservation cannot be rejected. Cancel it instead.");
+        }
+
+        reservation.setStatus(ReservationStatus.REFUSEE);
+    }
+
+    private void cancelReservationInternal(Reservation reservation, Offer offer) {
         if (reservation.getStatus() == ReservationStatus.ANNULEE) {
             return;
         }
 
+        boolean wasConfirmed = reservation.getStatus() == ReservationStatus.CONFIRMEE;
+
         reservation.setStatus(ReservationStatus.ANNULEE);
-        reservationRepository.save(reservation);
 
-        Offer offer = reservation.getOffer();
-
-        if (offer != null) {
+        if (wasConfirmed && offer != null) {
             offer.setAvailablePlaces(offer.getAvailablePlaces() + 1);
 
             if (offer.getStatus() == OfferStatus.COMPLETE) {

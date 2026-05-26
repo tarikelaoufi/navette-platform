@@ -79,6 +79,7 @@ body {
 
 .navbar {
   backdrop-filter: blur(16px);
+  z-index: 1050;
 }
 
 .nav-user-email {
@@ -205,7 +206,7 @@ body {
   backdrop-filter: blur(16px);
   position: sticky;
   top: 0;
-  z-index: 10;
+  z-index: 1000;
 }
 
 .dashboard-header h4 {
@@ -248,26 +249,26 @@ body {
 }
 
 .search-card {
-  position: relative !important;
-  z-index: 10000 !important;
-  overflow: visible !important;
+  position: relative;
+  z-index: 20;
+  overflow: visible;
 }
 
 .search-card .row {
-  overflow: visible !important;
+  overflow: visible;
 }
 
 .autocomplete-wrapper {
-  position: relative !important;
-  z-index: 10001 !important;
+  position: relative;
+  z-index: 30;
 }
 
 .autocomplete-menu {
-  position: absolute !important;
+  position: absolute;
   top: calc(100% + 8px);
   left: 0;
   right: 0;
-  z-index: 10002 !important;
+  z-index: 40;
   background: rgba(255, 255, 255, 0.98);
   border: 1px solid rgba(226, 232, 240, 0.95);
   border-radius: 18px;
@@ -493,6 +494,40 @@ body {
 }
 
 /* =========================
+   Regular Reservation Page
+========================= */
+
+.regular-reservation-header {
+  max-width: 760px;
+}
+
+.regular-reservation-card {
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  border-radius: 28px;
+  padding: 32px;
+  backdrop-filter: blur(14px);
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.06);
+}
+
+.input-icon-box {
+  position: relative;
+}
+
+.input-icon-box svg {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #64748b;
+  z-index: 2;
+}
+
+.input-icon-box .form-control {
+  padding-left: 44px;
+}
+
+/* =========================
    Dashboard Cards / Sections
 ========================= */
 
@@ -640,5 +675,9 @@ body {
   .route-details-line {
     width: 100%;
     flex: unset;
+  }
+
+  .regular-reservation-card {
+    padding: 22px;
   }
 }

@@ -37,6 +37,14 @@ public class RegularReservationRequest {
 
     private String notes;
 
+    private Boolean hasWifi;
+
+    private Boolean hasAirConditioning;
+
+    private Boolean hasUsbCharger;
+
+    private Boolean allowsLuggage;
+
     public Long getUserId() {
         return userId;
     }
@@ -73,6 +81,22 @@ public class RegularReservationRequest {
         return notes;
     }
 
+    public Boolean getHasWifi() {
+        return hasWifi;
+    }
+
+    public Boolean getHasAirConditioning() {
+        return hasAirConditioning;
+    }
+
+    public Boolean getHasUsbCharger() {
+        return hasUsbCharger;
+    }
+
+    public Boolean getAllowsLuggage() {
+        return allowsLuggage;
+    }
+
     public void setUserId(Long userId) {
         this.userId = userId;
     }
@@ -107,5 +131,21 @@ public class RegularReservationRequest {
 
     public void setNotes(String notes) {
         this.notes = notes;
+    }
+
+    public void setHasWifi(Boolean hasWifi) {
+        this.hasWifi = hasWifi;
+    }
+
+    public void setHasAirConditioning(Boolean hasAirConditioning) {
+        this.hasAirConditioning = hasAirConditioning;
+    }
+
+    public void setHasUsbCharger(Boolean hasUsbCharger) {
+        this.hasUsbCharger = hasUsbCharger;
+    }
+
+    public void setAllowsLuggage(Boolean allowsLuggage) {
+        this.allowsLuggage = allowsLuggage;
     }
 }
