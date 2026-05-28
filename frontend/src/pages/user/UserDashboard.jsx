@@ -3,15 +3,17 @@ import {
     CalendarDays,
     Clock,
     MapPin,
-    RefreshCw,
     Ticket,
     Users,
     WalletCards,
+    Building2,
+    Bus,
 } from "lucide-react";
 import api from "../../api/axios";
 
 export default function UserDashboard() {
     const userId = localStorage.getItem("userId");
+    const role = localStorage.getItem("role") || "ROLE_USER";
 
     const [reservations, setReservations] = useState([]);
     const [subscriptions, setSubscriptions] = useState([]);
@@ -29,7 +31,7 @@ export default function UserDashboard() {
                 await Promise.all([
                     api.get(`/api/user/reservations?userId=${userId}`),
                     api.get(`/api/user/subscriptions?userId=${userId}`),
-                    api.get(`/api/user/demands?userId=${userId}`),
+                    api.get(`/api/user/regular-reservations?userId=${userId}`),
                 ]);
 
             setReservations(reservationsResponse.data);
@@ -44,12 +46,12 @@ export default function UserDashboard() {
     };
 
     useEffect(() => {
-        fetchDashboardData();
-    }, []);
+        const timer = setTimeout(() => {
+            fetchDashboardData();
+        }, 0);
 
-    const totalReservations = reservations.length;
-    const totalSubscriptions = subscriptions.length;
-    const totalDemands = demands.length;
+        return () => clearTimeout(timer);
+    }, []);
 
     if (loading) {
         return (
@@ -61,19 +63,19 @@ export default function UserDashboard() {
     }
 
     return (
-        <div>
-            <div className="d-flex flex-column flex-lg-row justify-content-between gap-3 mb-4">
+        <div className="dashboard-page">
+            <div className="dashboard-page-header">
                 <div>
                     <h1 className="fw-bold mb-1">Tableau de bord utilisateur</h1>
                     <p className="text-muted mb-0">
-                        Suivez vos réservations, abonnements et demandes de navette.
+                        Suivez séparément vos billets simples, abonnements et demandes de navette.
                     </p>
                 </div>
 
-                <button className="btn btn-outline-primary" onClick={fetchDashboardData}>
-                    <RefreshCw size={18} />
-                    Actualiser
-                </button>
+                <div className="dashboard-page-role">
+                    <Users size={18} />
+                    {role}
+                </div>
             </div>
 
             {error && (
@@ -83,51 +85,36 @@ export default function UserDashboard() {
             )}
 
             <div className="row g-4 mb-4">
-                <div className="col-md-4">
-                    <div className="dashboard-stat-card">
-                        <div className="stat-icon bg-primary-subtle text-primary">
-                            <Ticket size={24} />
-                        </div>
-                        <div>
-                            <small>Réservations</small>
-                            <strong>{totalReservations}</strong>
-                        </div>
-                    </div>
-                </div>
+                <StatCard
+                    title="Billets simples"
+                    value={reservations.length}
+                    icon={<Ticket size={24} />}
+                    colorClass="bg-primary-subtle text-primary"
+                />
 
-                <div className="col-md-4">
-                    <div className="dashboard-stat-card">
-                        <div className="stat-icon bg-success-subtle text-success">
-                            <WalletCards size={24} />
-                        </div>
-                        <div>
-                            <small>Abonnements</small>
-                            <strong>{totalSubscriptions}</strong>
-                        </div>
-                    </div>
-                </div>
+                <StatCard
+                    title="Abonnements"
+                    value={subscriptions.length}
+                    icon={<WalletCards size={24} />}
+                    colorClass="bg-success-subtle text-success"
+                />
 
-                <div className="col-md-4">
-                    <div className="dashboard-stat-card">
-                        <div className="stat-icon bg-warning-subtle text-warning">
-                            <Users size={24} />
-                        </div>
-                        <div>
-                            <small>Demandes</small>
-                            <strong>{totalDemands}</strong>
-                        </div>
-                    </div>
-                </div>
+                <StatCard
+                    title="Demandes de navette"
+                    value={demands.length}
+                    icon={<Users size={24} />}
+                    colorClass="bg-warning-subtle text-warning"
+                />
             </div>
 
             <section className="dashboard-section mb-4">
                 <div className="section-header">
-                    <h4>Mes réservations</h4>
+                    <h4>Mes billets simples</h4>
                     <span>{reservations.length}</span>
                 </div>
 
                 {reservations.length === 0 ? (
-                    <EmptyBox message="Aucune réservation trouvée." />
+                    <EmptyBox message="Aucun billet simple trouvé." />
                 ) : (
                     <div className="row g-3">
                         {reservations.map((reservation) => (
@@ -135,16 +122,24 @@ export default function UserDashboard() {
                                 <div className="mini-card">
                                     <div className="d-flex justify-content-between gap-3">
                                         <div>
+                      <span className="badge bg-primary-subtle text-primary mb-2">
+                        Billet simple
+                      </span>
+
                                             <h6 className="fw-bold mb-1">
-                                                {reservation.offerTitle}
+                                                {reservation.offerTitle || `Billet #${reservation.id}`}
                                             </h6>
+
                                             <p className="text-muted mb-2">
-                                                {reservation.departureCityName} →{" "}
-                                                {reservation.arrivalCityName}
+                                                {reservation.departureCityName} → {reservation.arrivalCityName}
                                             </p>
                                         </div>
 
-                                        <span className="badge bg-primary-subtle text-primary align-self-start">
+                                        <span
+                                            className={`badge align-self-start ${getReservationBadgeClass(
+                                                reservation.status
+                                            )}`}
+                                        >
                       {reservation.status}
                     </span>
                                     </div>
@@ -152,15 +147,33 @@ export default function UserDashboard() {
                                     <div className="mini-info">
                     <span>
                       <CalendarDays size={16} />
-                      Trajet : {reservation.travelDate}
+                      Date du trajet : {reservation.travelDate}
                     </span>
+
                                         <span>
                       <Clock size={16} />
-                      Réservé le : {formatDateTime(reservation.reservationDate)}
+                      Horaire : {reservation.departureTime || "-"} →{" "}
+                                            {reservation.arrivalTime || "-"}
                     </span>
+
                                         <span>
-                      <MapPin size={16} />
-                      Montant : {reservation.amount} MAD
+                      <Building2 size={16} />
+                      Société : {reservation.companyName || "-"}
+                    </span>
+
+                                        <span>
+                      <Bus size={16} />
+                      Navette : {reservation.shuttleName || "-"}
+                    </span>
+
+                                        <span>
+                      <Clock size={16} />
+                      Demandé le : {formatDateTime(reservation.reservationDate)}
+                    </span>
+
+                                        <span>
+                      <Ticket size={16} />
+                      Prix billet : {formatPrice(reservation.amount)} MAD
                     </span>
                                     </div>
                                 </div>
@@ -185,9 +198,14 @@ export default function UserDashboard() {
                                 <div className="mini-card">
                                     <div className="d-flex justify-content-between gap-3">
                                         <div>
+                      <span className="badge bg-success-subtle text-success mb-2">
+                        Abonnement
+                      </span>
+
                                             <h6 className="fw-bold mb-1">
-                                                {subscription.offerTitle}
+                                                {subscription.offerTitle || `Abonnement #${subscription.id}`}
                                             </h6>
+
                                             <p className="text-muted mb-2">
                                                 {subscription.departureCityName} →{" "}
                                                 {subscription.arrivalCityName}
@@ -204,14 +222,15 @@ export default function UserDashboard() {
                       <CalendarDays size={16} />
                       Du {subscription.startDate} au {subscription.endDate}
                     </span>
+
                                         <span>
                       <Clock size={16} />
-                      Souscrit le :{" "}
-                                            {formatDateTime(subscription.subscriptionDate)}
+                      Souscrit le : {formatDateTime(subscription.subscriptionDate)}
                     </span>
+
                                         <span>
                       <WalletCards size={16} />
-                      Montant : {subscription.amount} MAD
+                      Prix abonnement : {formatPrice(subscription.amount)} MAD
                     </span>
                                     </div>
                                 </div>
@@ -223,12 +242,12 @@ export default function UserDashboard() {
 
             <section className="dashboard-section">
                 <div className="section-header">
-                    <h4>Mes demandes</h4>
+                    <h4>Mes demandes de navette</h4>
                     <span>{demands.length}</span>
                 </div>
 
                 {demands.length === 0 ? (
-                    <EmptyBox message="Aucune demande trouvée." />
+                    <EmptyBox message="Aucune demande de navette trouvée." />
                 ) : (
                     <div className="row g-3">
                         {demands.map((demand) => (
@@ -236,15 +255,25 @@ export default function UserDashboard() {
                                 <div className="mini-card">
                                     <div className="d-flex justify-content-between gap-3">
                                         <div>
+                      <span className="badge bg-warning-subtle text-warning mb-2">
+                        Demande de navette
+                      </span>
+
                                             <h6 className="fw-bold mb-1">
-                                                {demand.departureCityName} → {demand.arrivalCityName}
+                                                {demand.departureCityName || demand.departureCity} →{" "}
+                                                {demand.arrivalCityName || demand.arrivalCity}
                                             </h6>
+
                                             <p className="text-muted mb-2">
-                                                Période : {demand.period}
+                                                Période : {demand.period || "-"}
                                             </p>
                                         </div>
 
-                                        <span className="badge bg-warning-subtle text-warning align-self-start">
+                                        <span
+                                            className={`badge align-self-start ${getDemandBadgeClass(
+                                                demand.status
+                                            )}`}
+                                        >
                       {demand.status}
                     </span>
                                     </div>
@@ -252,16 +281,36 @@ export default function UserDashboard() {
                                     <div className="mini-info">
                     <span>
                       <Clock size={16} />
-                      Heure souhaitée : {demand.desiredTime}
+                      Heure souhaitée : {demand.desiredTime || "-"}
                     </span>
+
                                         <span>
                       <Users size={16} />
-                      Intéressés : {demand.interestedCount}
+                      Places souhaitées : {demand.seats || 1}
                     </span>
+
                                         <span>
                       <CalendarDays size={16} />
-                      Créée le : {formatDateTime(demand.createdAt)}
+                                            {demand.startDate && demand.endDate
+                                                ? `${demand.startDate} / ${demand.endDate}`
+                                                : "Dates non précisées"}
                     </span>
+
+                                        {demand.notes && (
+                                            <span>
+                        <MapPin size={16} />
+                        Note : {demand.notes}
+                      </span>
+                                        )}
+
+                                        <OptionBadges
+                                            hasWifi={demand.hasWifi}
+                                            hasAirConditioning={demand.hasAirConditioning}
+                                            hasUsbCharger={demand.hasUsbCharger}
+                                            allowsLuggage={demand.allowsLuggage}
+                                            suffix=" demandé"
+                                            emptyText="Aucune option demandée"
+                                        />
                                     </div>
                                 </div>
                             </div>
@@ -269,6 +318,63 @@ export default function UserDashboard() {
                     </div>
                 )}
             </section>
+        </div>
+    );
+}
+
+function StatCard({ title, value, icon, colorClass }) {
+    return (
+        <div className="col-md-4">
+            <div className="dashboard-stat-card">
+                <div className={`stat-icon ${colorClass}`}>{icon}</div>
+
+                <div>
+                    <small>{title}</small>
+                    <strong>{value}</strong>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function OptionBadges({
+                          hasWifi,
+                          hasAirConditioning,
+                          hasUsbCharger,
+                          allowsLuggage,
+                          suffix = "",
+                          emptyText = "Aucune option",
+                      }) {
+    const hasAnyOption =
+        hasWifi || hasAirConditioning || hasUsbCharger || allowsLuggage;
+
+    return (
+        <div className="d-flex flex-wrap gap-2 mt-2">
+            {hasWifi && (
+                <span className="badge bg-info-subtle text-info">Wi-Fi{suffix}</span>
+            )}
+
+            {hasAirConditioning && (
+                <span className="badge bg-primary-subtle text-primary">
+          Climatisation{suffix}
+        </span>
+            )}
+
+            {hasUsbCharger && (
+                <span className="badge bg-success-subtle text-success">USB{suffix}</span>
+            )}
+
+            {allowsLuggage && (
+                <span className="badge bg-warning-subtle text-warning">
+          Bagages{suffix}
+        </span>
+            )}
+
+            {!hasAnyOption && (
+                <span className="badge bg-secondary-subtle text-secondary">
+          {emptyText}
+        </span>
+            )}
         </div>
     );
 }
@@ -288,4 +394,25 @@ function formatDateTime(value) {
         dateStyle: "short",
         timeStyle: "short",
     });
+}
+
+function formatPrice(value) {
+    if (value === null || value === undefined || value === "") return "-";
+    return Number(value).toFixed(2);
+}
+
+function getReservationBadgeClass(status) {
+    if (status === "CONFIRMEE") return "bg-success-subtle text-success";
+    if (status === "EN_ATTENTE") return "bg-warning-subtle text-warning";
+    if (status === "REFUSEE") return "bg-danger-subtle text-danger";
+    if (status === "ANNULEE") return "bg-secondary-subtle text-secondary";
+    return "bg-primary-subtle text-primary";
+}
+
+function getDemandBadgeClass(status) {
+    if (status === "ACCEPTED") return "bg-success-subtle text-success";
+    if (status === "PENDING") return "bg-warning-subtle text-warning";
+    if (status === "REJECTED") return "bg-danger-subtle text-danger";
+    if (status === "CANCELLED") return "bg-secondary-subtle text-secondary";
+    return "bg-primary-subtle text-primary";
 }

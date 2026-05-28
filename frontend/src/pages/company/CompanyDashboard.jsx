@@ -5,14 +5,17 @@ import {
     Clock,
     MapPin,
     Plus,
-    RefreshCw,
     Route,
+    Ticket,
     Users,
+    WalletCards,
+    Building2,
 } from "lucide-react";
 import api from "../../api/axios";
 
 export default function CompanyDashboard() {
-    const companyId = 1;
+    const companyId = Number(localStorage.getItem("companyId") || 1);
+    const role = localStorage.getItem("role") || "ROLE_COMPANY";
 
     const [shuttles, setShuttles] = useState([]);
     const [offers, setOffers] = useState([]);
@@ -41,13 +44,12 @@ export default function CompanyDashboard() {
         startDate: "",
         endDate: "",
         price: "",
+        ticketPrice: "",
         totalPlaces: "",
         description: "",
     });
 
     const [loading, setLoading] = useState(true);
-    const [refreshing, setRefreshing] = useState(false);
-
     const [creatingShuttle, setCreatingShuttle] = useState(false);
     const [creatingOffer, setCreatingOffer] = useState(false);
     const [updatingReservationId, setUpdatingReservationId] = useState(null);
@@ -56,11 +58,7 @@ export default function CompanyDashboard() {
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
 
-    const loadDashboardData = async ({ showLoader = false } = {}) => {
-        if (showLoader) {
-            setRefreshing(true);
-        }
-
+    const loadDashboardData = async () => {
         setError("");
 
         try {
@@ -88,53 +86,15 @@ export default function CompanyDashboard() {
             setError("Impossible de charger les données de votre espace société.");
         } finally {
             setLoading(false);
-            setRefreshing(false);
         }
     };
 
     useEffect(() => {
-        let isMounted = true;
+        const timer = setTimeout(() => {
+            loadDashboardData();
+        }, 0);
 
-        Promise.all([
-            api.get(`/api/company/shuttles?companyId=${companyId}`),
-            api.get(`/api/company/offers?companyId=${companyId}`),
-            api.get(`/api/company/reservations?companyId=${companyId}`),
-            api.get("/api/company/regular-reservations"),
-            api.get("/api/cities"),
-        ])
-            .then(
-                ([
-                     shuttlesResponse,
-                     offersResponse,
-                     reservationsResponse,
-                     demandsResponse,
-                     citiesResponse,
-                 ]) => {
-                    if (!isMounted) return;
-
-                    setShuttles(shuttlesResponse.data);
-                    setOffers(offersResponse.data);
-                    setReservations(reservationsResponse.data);
-                    setDemands(demandsResponse.data);
-                    setCities(citiesResponse.data);
-                }
-            )
-            .catch((error) => {
-                console.error("COMPANY DASHBOARD ERROR:", error);
-
-                if (isMounted) {
-                    setError("Impossible de charger les données de votre espace société.");
-                }
-            })
-            .finally(() => {
-                if (isMounted) {
-                    setLoading(false);
-                }
-            });
-
-        return () => {
-            isMounted = false;
-        };
+        return () => clearTimeout(timer);
     }, []);
 
     const handleShuttleChange = (event) => {
@@ -225,6 +185,7 @@ export default function CompanyDashboard() {
                 startDate: offerForm.startDate,
                 endDate: offerForm.endDate,
                 price: Number(offerForm.price),
+                ticketPrice: Number(offerForm.ticketPrice),
                 totalPlaces: Number(offerForm.totalPlaces),
                 description: offerForm.description,
             });
@@ -241,6 +202,7 @@ export default function CompanyDashboard() {
                 startDate: "",
                 endDate: "",
                 price: "",
+                ticketPrice: "",
                 totalPlaces: "",
                 description: "",
             });
@@ -267,11 +229,11 @@ export default function CompanyDashboard() {
             await api.put(`/api/company/reservations/${reservationId}/status?status=${status}`);
 
             if (status === "CONFIRMEE") {
-                setSuccess("Réservation acceptée avec succès.");
+                setSuccess("Billet simple accepté avec succès.");
             } else if (status === "REFUSEE") {
-                setSuccess("Réservation refusée avec succès.");
+                setSuccess("Billet simple refusé avec succès.");
             } else if (status === "ANNULEE") {
-                setSuccess("Réservation annulée avec succès.");
+                setSuccess("Billet simple annulé avec succès.");
             }
 
             await loadDashboardData();
@@ -280,7 +242,7 @@ export default function CompanyDashboard() {
             setError(
                 error.response?.data?.message ||
                 error.response?.data?.error ||
-                "Impossible de modifier le statut de la réservation."
+                "Impossible de modifier le statut du billet simple."
             );
         } finally {
             setUpdatingReservationId(null);
@@ -324,24 +286,19 @@ export default function CompanyDashboard() {
     }
 
     return (
-        <div>
-            <div className="d-flex flex-column flex-lg-row justify-content-between gap-3 mb-4">
+        <div className="dashboard-page">
+            <div className="dashboard-page-header">
                 <div>
                     <h1 className="fw-bold mb-1">Tableau de bord société</h1>
                     <p className="text-muted mb-0">
-                        Gérez vos navettes, vos offres, les réservations clients et les demandes de navette.
+                        Gérez vos navettes, offres, billets simples et demandes de navette.
                     </p>
                 </div>
 
-                <button
-                    type="button"
-                    className="btn btn-outline-primary d-flex align-items-center gap-2"
-                    onClick={() => loadDashboardData({ showLoader: true })}
-                    disabled={refreshing}
-                >
-                    <RefreshCw size={18} />
-                    {refreshing ? "Actualisation..." : "Actualiser"}
-                </button>
+                <div className="dashboard-page-role">
+                    <Building2 size={18} />
+                    {role}
+                </div>
             </div>
 
             {success && (
@@ -357,53 +314,33 @@ export default function CompanyDashboard() {
             )}
 
             <div className="row g-4 mb-4">
-                <div className="col-md-3">
-                    <div className="dashboard-stat-card">
-                        <div className="stat-icon bg-primary-subtle text-primary">
-                            <Bus size={24} />
-                        </div>
-                        <div>
-                            <small>Navettes</small>
-                            <strong>{shuttles.length}</strong>
-                        </div>
-                    </div>
-                </div>
+                <StatCard
+                    title="Navettes"
+                    value={shuttles.length}
+                    icon={<Bus size={24} />}
+                    colorClass="bg-primary-subtle text-primary"
+                />
 
-                <div className="col-md-3">
-                    <div className="dashboard-stat-card">
-                        <div className="stat-icon bg-success-subtle text-success">
-                            <Route size={24} />
-                        </div>
-                        <div>
-                            <small>Offres</small>
-                            <strong>{offers.length}</strong>
-                        </div>
-                    </div>
-                </div>
+                <StatCard
+                    title="Offres"
+                    value={offers.length}
+                    icon={<Route size={24} />}
+                    colorClass="bg-success-subtle text-success"
+                />
 
-                <div className="col-md-3">
-                    <div className="dashboard-stat-card">
-                        <div className="stat-icon bg-info-subtle text-info">
-                            <CalendarDays size={24} />
-                        </div>
-                        <div>
-                            <small>Réservations</small>
-                            <strong>{reservations.length}</strong>
-                        </div>
-                    </div>
-                </div>
+                <StatCard
+                    title="Billets simples"
+                    value={reservations.length}
+                    icon={<Ticket size={24} />}
+                    colorClass="bg-info-subtle text-info"
+                />
 
-                <div className="col-md-3">
-                    <div className="dashboard-stat-card">
-                        <div className="stat-icon bg-warning-subtle text-warning">
-                            <Users size={24} />
-                        </div>
-                        <div>
-                            <small>Demandes</small>
-                            <strong>{demands.length}</strong>
-                        </div>
-                    </div>
-                </div>
+                <StatCard
+                    title="Demandes de navette"
+                    value={demands.length}
+                    icon={<Users size={24} />}
+                    colorClass="bg-warning-subtle text-warning"
+                />
             </div>
 
             <section className="dashboard-section mb-4">
@@ -641,8 +578,8 @@ export default function CompanyDashboard() {
                                 />
                             </div>
 
-                            <div className="col-md-6">
-                                <label className="form-label">Prix</label>
+                            <div className="col-md-4">
+                                <label className="form-label">Prix abonnement</label>
                                 <input
                                     type="number"
                                     min="0"
@@ -656,7 +593,22 @@ export default function CompanyDashboard() {
                                 />
                             </div>
 
-                            <div className="col-md-6">
+                            <div className="col-md-4">
+                                <label className="form-label">Prix billet simple</label>
+                                <input
+                                    type="number"
+                                    min="0"
+                                    step="0.01"
+                                    name="ticketPrice"
+                                    className="form-control"
+                                    placeholder="25"
+                                    value={offerForm.ticketPrice}
+                                    onChange={handleOfferChange}
+                                    required
+                                />
+                            </div>
+
+                            <div className="col-md-4">
                                 <label className="form-label">Nombre de places</label>
                                 <input
                                     type="number"
@@ -694,12 +646,12 @@ export default function CompanyDashboard() {
 
             <section className="dashboard-section mb-4">
                 <div className="section-header">
-                    <h4>Réservations des clients</h4>
+                    <h4>Demandes de billets simples</h4>
                     <span>{reservations.length}</span>
                 </div>
 
                 {reservations.length === 0 ? (
-                    <EmptyBox message="Aucune réservation client trouvée." />
+                    <EmptyBox message="Aucune demande de billet simple trouvée." />
                 ) : (
                     <div className="row g-3">
                         {reservations.map((reservation) => (
@@ -707,9 +659,11 @@ export default function CompanyDashboard() {
                                 <div className="mini-card">
                                     <div className="d-flex justify-content-between gap-3">
                                         <div>
-                                            <h6 className="fw-bold mb-1">
-                                                {reservation.offerTitle}
-                                            </h6>
+                      <span className="badge bg-primary-subtle text-primary mb-2">
+                        Billet simple
+                      </span>
+
+                                            <h6 className="fw-bold mb-1">{reservation.offerTitle}</h6>
 
                                             <p className="text-muted mb-2">
                                                 {reservation.departureCityName} → {reservation.arrivalCityName}
@@ -738,71 +692,105 @@ export default function CompanyDashboard() {
 
                                         <span>
                       <Clock size={16} />
-                      Réservée le : {formatDateTime(reservation.reservationDate)}
+                      Demandé le : {formatDateTime(reservation.reservationDate)}
                     </span>
 
                                         <span>
-                      <Bus size={16} />
-                      Montant : {reservation.amount} MAD
+                      <Ticket size={16} />
+                      Prix billet : {formatPrice(reservation.amount)} MAD
                     </span>
                                     </div>
 
-                                    <div className="d-flex flex-wrap gap-2 mt-3">
-                                        {reservation.status === "EN_ATTENTE" && (
-                                            <>
-                                                <button
-                                                    type="button"
-                                                    className="btn btn-success btn-sm"
-                                                    disabled={updatingReservationId === reservation.id}
-                                                    onClick={() =>
-                                                        handleUpdateReservationStatus(
-                                                            reservation.id,
-                                                            "CONFIRMEE"
-                                                        )
-                                                    }
-                                                >
-                                                    Accepter
-                                                </button>
+                                    <ReservationActions
+                                        reservation={reservation}
+                                        updatingReservationId={updatingReservationId}
+                                        onUpdate={handleUpdateReservationStatus}
+                                    />
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </section>
 
-                                                <button
-                                                    type="button"
-                                                    className="btn btn-outline-danger btn-sm"
-                                                    disabled={updatingReservationId === reservation.id}
-                                                    onClick={() =>
-                                                        handleUpdateReservationStatus(
-                                                            reservation.id,
-                                                            "REFUSEE"
-                                                        )
-                                                    }
-                                                >
-                                                    Refuser
-                                                </button>
-                                            </>
-                                        )}
+            <section className="dashboard-section mb-4">
+                <div className="section-header">
+                    <h4>Demandes de navette des utilisateurs</h4>
+                    <span>{demands.length}</span>
+                </div>
 
-                                        {reservation.status === "CONFIRMEE" && (
-                                            <button
-                                                type="button"
-                                                className="btn btn-outline-secondary btn-sm"
-                                                disabled={updatingReservationId === reservation.id}
-                                                onClick={() =>
-                                                    handleUpdateReservationStatus(
-                                                        reservation.id,
-                                                        "ANNULEE"
-                                                    )
-                                                }
-                                            >
-                                                Annuler
-                                            </button>
-                                        )}
+                {demands.length === 0 ? (
+                    <EmptyBox message="Aucune demande de navette trouvée." />
+                ) : (
+                    <div className="row g-3">
+                        {demands.map((demand) => (
+                            <div className="col-lg-6" key={demand.id}>
+                                <div className="mini-card">
+                                    <div className="d-flex justify-content-between gap-3">
+                                        <div>
+                      <span className="badge bg-warning-subtle text-warning mb-2">
+                        Demande de navette
+                      </span>
 
-                                        {(reservation.status === "REFUSEE" ||
-                                            reservation.status === "ANNULEE") && (
-                                            <span className="text-muted small">
-                        Aucune action disponible
+                                            <h6 className="fw-bold mb-1">
+                                                {demand.departureCityName || demand.departureCity} →{" "}
+                                                {demand.arrivalCityName || demand.arrivalCity}
+                                            </h6>
+
+                                            <p className="text-muted mb-2">
+                                                Période : {demand.period || "-"}
+                                            </p>
+                                        </div>
+
+                                        <span
+                                            className={`badge align-self-start ${getDemandBadgeClass(
+                                                demand.status
+                                            )}`}
+                                        >
+                      {demand.status}
+                    </span>
+                                    </div>
+
+                                    <div className="mini-info">
+                    <span>
+                      <Clock size={16} />
+                      Heure souhaitée : {demand.desiredTime || "-"}
+                    </span>
+
+                                        <span>
+                      <Users size={16} />
+                      Places souhaitées : {demand.seats || demand.interestedCount || 1}
+                    </span>
+
+                                        <span>
+                      <CalendarDays size={16} />
+                                            {demand.startDate && demand.endDate
+                                                ? `${demand.startDate} / ${demand.endDate}`
+                                                : `Créée le : ${formatDateTime(demand.createdAt)}`}
+                    </span>
+
+                                        {demand.notes && (
+                                            <span>
+                        <MapPin size={16} />
+                        Note : {demand.notes}
                       </span>
                                         )}
+
+                                        <OptionBadges
+                                            hasWifi={demand.hasWifi}
+                                            hasAirConditioning={demand.hasAirConditioning}
+                                            hasUsbCharger={demand.hasUsbCharger}
+                                            allowsLuggage={demand.allowsLuggage}
+                                            suffix=" demandé"
+                                            emptyText="Aucune option demandée"
+                                        />
                                     </div>
+
+                                    <DemandActions
+                                        demand={demand}
+                                        updatingDemandId={updatingDemandId}
+                                        onUpdate={handleUpdateDemandStatus}
+                                    />
                                 </div>
                             </div>
                         ))}
@@ -867,7 +855,7 @@ export default function CompanyDashboard() {
                 )}
             </section>
 
-            <section className="dashboard-section mb-4">
+            <section className="dashboard-section">
                 <div className="section-header">
                     <h4>Mes offres</h4>
                     <span>{offers.length}</span>
@@ -905,6 +893,16 @@ export default function CompanyDashboard() {
                     </span>
 
                                         <span>
+                      <Ticket size={16} />
+                      Billet simple : {formatPrice(offer.ticketPrice)} MAD
+                    </span>
+
+                                        <span>
+                      <WalletCards size={16} />
+                      Abonnement : {formatPrice(offer.price)} MAD
+                    </span>
+
+                                        <span>
                       <Users size={16} />
                       Places : {offer.availablePlaces} / {offer.totalPlaces}
                     </span>
@@ -920,115 +918,95 @@ export default function CompanyDashboard() {
                     </div>
                 )}
             </section>
+        </div>
+    );
+}
 
-            <section className="dashboard-section">
-                <div className="section-header">
-                    <h4>Demandes de navette des utilisateurs</h4>
-                    <span>{demands.length}</span>
+function StatCard({ title, value, icon, colorClass }) {
+    return (
+        <div className="col-md-3">
+            <div className="dashboard-stat-card">
+                <div className={`stat-icon ${colorClass}`}>{icon}</div>
+                <div>
+                    <small>{title}</small>
+                    <strong>{value}</strong>
                 </div>
+            </div>
+        </div>
+    );
+}
 
-                {demands.length === 0 ? (
-                    <EmptyBox message="Aucune demande de navette trouvée." />
-                ) : (
-                    <div className="row g-3">
-                        {demands.map((demand) => (
-                            <div className="col-lg-6" key={demand.id}>
-                                <div className="mini-card">
-                                    <div className="d-flex justify-content-between gap-3">
-                                        <div>
-                                            <h6 className="fw-bold mb-1">
-                                                {demand.departureCityName || demand.departureCity} →{" "}
-                                                {demand.arrivalCityName || demand.arrivalCity}
-                                            </h6>
+function ReservationActions({ reservation, updatingReservationId, onUpdate }) {
+    return (
+        <div className="d-flex flex-wrap gap-2 mt-3">
+            {reservation.status === "EN_ATTENTE" && (
+                <>
+                    <button
+                        type="button"
+                        className="btn btn-success btn-sm"
+                        disabled={updatingReservationId === reservation.id}
+                        onClick={() => onUpdate(reservation.id, "CONFIRMEE")}
+                    >
+                        Accepter
+                    </button>
 
-                                            <p className="text-muted mb-2">
-                                                Période : {demand.period}
-                                            </p>
-                                        </div>
+                    <button
+                        type="button"
+                        className="btn btn-outline-danger btn-sm"
+                        disabled={updatingReservationId === reservation.id}
+                        onClick={() => onUpdate(reservation.id, "REFUSEE")}
+                    >
+                        Refuser
+                    </button>
+                </>
+            )}
 
-                                        <span
-                                            className={`badge align-self-start ${getDemandBadgeClass(
-                                                demand.status
-                                            )}`}
-                                        >
-                      {demand.status}
-                    </span>
-                                    </div>
+            {reservation.status === "CONFIRMEE" && (
+                <button
+                    type="button"
+                    className="btn btn-outline-secondary btn-sm"
+                    disabled={updatingReservationId === reservation.id}
+                    onClick={() => onUpdate(reservation.id, "ANNULEE")}
+                >
+                    Annuler
+                </button>
+            )}
 
-                                    <div className="mini-info">
-                    <span>
-                      <Clock size={16} />
-                      Heure souhaitée : {demand.desiredTime}
-                    </span>
+            {(reservation.status === "REFUSEE" || reservation.status === "ANNULEE") && (
+                <span className="text-muted small">Aucune action disponible</span>
+            )}
+        </div>
+    );
+}
 
-                                        <span>
-                      <Users size={16} />
-                      Places souhaitées : {demand.seats || demand.interestedCount || 1}
-                    </span>
+function DemandActions({ demand, updatingDemandId, onUpdate }) {
+    return (
+        <div className="d-flex flex-wrap gap-2 mt-3">
+            {demand.status === "PENDING" && (
+                <>
+                    <button
+                        type="button"
+                        className="btn btn-success btn-sm"
+                        disabled={updatingDemandId === demand.id}
+                        onClick={() => onUpdate(demand.id, "ACCEPTED")}
+                    >
+                        Accepter
+                    </button>
 
-                                        <span>
-                      <CalendarDays size={16} />
-                                            {demand.startDate && demand.endDate
-                                                ? `${demand.startDate} / ${demand.endDate}`
-                                                : `Créée le : ${formatDateTime(demand.createdAt)}`}
-                    </span>
+                    <button
+                        type="button"
+                        className="btn btn-outline-danger btn-sm"
+                        disabled={updatingDemandId === demand.id}
+                        onClick={() => onUpdate(demand.id, "REJECTED")}
+                    >
+                        Refuser
+                    </button>
+                </>
+            )}
 
-                                        {demand.notes && (
-                                            <span>
-                        <MapPin size={16} />
-                                                {demand.notes}
-                      </span>
-                                        )}
-
-                                        <OptionBadges
-                                            hasWifi={demand.hasWifi}
-                                            hasAirConditioning={demand.hasAirConditioning}
-                                            hasUsbCharger={demand.hasUsbCharger}
-                                            allowsLuggage={demand.allowsLuggage}
-                                            suffix=" demandé"
-                                            emptyText="Aucune option demandée"
-                                        />
-                                    </div>
-
-                                    <div className="d-flex flex-wrap gap-2 mt-3">
-                                        {demand.status === "PENDING" && (
-                                            <>
-                                                <button
-                                                    type="button"
-                                                    className="btn btn-success btn-sm"
-                                                    disabled={updatingDemandId === demand.id}
-                                                    onClick={() =>
-                                                        handleUpdateDemandStatus(demand.id, "ACCEPTED")
-                                                    }
-                                                >
-                                                    Accepter
-                                                </button>
-
-                                                <button
-                                                    type="button"
-                                                    className="btn btn-outline-danger btn-sm"
-                                                    disabled={updatingDemandId === demand.id}
-                                                    onClick={() =>
-                                                        handleUpdateDemandStatus(demand.id, "REJECTED")
-                                                    }
-                                                >
-                                                    Refuser
-                                                </button>
-                                            </>
-                                        )}
-
-                                        {demand.status !== "PENDING" && (
-                                            <span className="text-muted small">
-                        Aucune action disponible
-                      </span>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                )}
-            </section>
+            {demand.status !== "PENDING" && (
+                <span className="text-muted small">Aucune action disponible</span>
+            )}
         </div>
     );
 }
@@ -1067,11 +1045,7 @@ function OptionBadges({
 
     return (
         <div className="d-flex flex-wrap gap-2 mt-2">
-            {hasWifi && (
-                <span className="badge bg-info-subtle text-info">
-          Wi-Fi{suffix}
-        </span>
-            )}
+            {hasWifi && <span className="badge bg-info-subtle text-info">Wi-Fi{suffix}</span>}
 
             {hasAirConditioning && (
                 <span className="badge bg-primary-subtle text-primary">
@@ -1080,21 +1054,15 @@ function OptionBadges({
             )}
 
             {hasUsbCharger && (
-                <span className="badge bg-success-subtle text-success">
-          USB{suffix}
-        </span>
+                <span className="badge bg-success-subtle text-success">USB{suffix}</span>
             )}
 
             {allowsLuggage && (
-                <span className="badge bg-warning-subtle text-warning">
-          Bagages{suffix}
-        </span>
+                <span className="badge bg-warning-subtle text-warning">Bagages{suffix}</span>
             )}
 
             {!hasAnyOption && (
-                <span className="badge bg-secondary-subtle text-secondary">
-          {emptyText}
-        </span>
+                <span className="badge bg-secondary-subtle text-secondary">{emptyText}</span>
             )}
         </div>
     );
@@ -1117,42 +1085,23 @@ function formatDateTime(value) {
     });
 }
 
+function formatPrice(value) {
+    if (value === null || value === undefined || value === "") return "-";
+    return Number(value).toFixed(2);
+}
+
 function getReservationBadgeClass(status) {
-    if (status === "CONFIRMEE") {
-        return "bg-success-subtle text-success";
-    }
-
-    if (status === "EN_ATTENTE") {
-        return "bg-warning-subtle text-warning";
-    }
-
-    if (status === "REFUSEE") {
-        return "bg-danger-subtle text-danger";
-    }
-
-    if (status === "ANNULEE") {
-        return "bg-secondary-subtle text-secondary";
-    }
-
+    if (status === "CONFIRMEE") return "bg-success-subtle text-success";
+    if (status === "EN_ATTENTE") return "bg-warning-subtle text-warning";
+    if (status === "REFUSEE") return "bg-danger-subtle text-danger";
+    if (status === "ANNULEE") return "bg-secondary-subtle text-secondary";
     return "bg-primary-subtle text-primary";
 }
 
 function getDemandBadgeClass(status) {
-    if (status === "ACCEPTED") {
-        return "bg-success-subtle text-success";
-    }
-
-    if (status === "PENDING") {
-        return "bg-warning-subtle text-warning";
-    }
-
-    if (status === "REJECTED") {
-        return "bg-danger-subtle text-danger";
-    }
-
-    if (status === "CANCELLED") {
-        return "bg-secondary-subtle text-secondary";
-    }
-
+    if (status === "ACCEPTED") return "bg-success-subtle text-success";
+    if (status === "PENDING") return "bg-warning-subtle text-warning";
+    if (status === "REJECTED") return "bg-danger-subtle text-danger";
+    if (status === "CANCELLED") return "bg-secondary-subtle text-secondary";
     return "bg-primary-subtle text-primary";
 }

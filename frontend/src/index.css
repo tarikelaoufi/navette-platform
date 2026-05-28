@@ -1,7 +1,16 @@
 :root {
-  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+  sans-serif;
   color: #172033;
   background: #f6f8fb;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
@@ -9,6 +18,10 @@ body {
   min-width: 320px;
   min-height: 100vh;
   background: #f6f8fb;
+}
+
+a {
+  text-decoration: none;
 }
 
 .app-shell {
@@ -21,6 +34,179 @@ body {
 .min-vh-75 {
   min-height: 75vh;
 }
+
+.btn {
+  border-radius: 14px;
+}
+
+.form-control,
+.form-select {
+  border-radius: 14px;
+  padding: 12px 14px;
+}
+
+.form-control:focus,
+.form-select:focus {
+  box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.12);
+}
+
+/* =========================
+   Public Navbar
+========================= */
+
+.public-top-navbar {
+  position: sticky;
+  top: 0;
+  z-index: 1050;
+  width: 100%;
+  background: rgba(255, 255, 255, 0.97);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.9);
+  backdrop-filter: blur(14px);
+}
+
+.public-navbar-inner {
+  min-height: 56px;
+  padding: 0 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.public-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #0f172a;
+  font-size: 1.08rem;
+  font-weight: 900;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.public-brand:hover {
+  color: #0d6efd;
+}
+
+.public-navbar-links {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.25rem;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.public-navbar-links::-webkit-scrollbar {
+  display: none;
+}
+
+.public-nav-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 34px;
+  padding: 0.35rem 0.55rem;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: #1e293b;
+  box-shadow: none;
+  font-size: 0.88rem;
+  font-weight: 750;
+  line-height: 1;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: 0.18s ease;
+}
+
+.public-nav-link:hover {
+  color: #0d6efd;
+  background: transparent;
+}
+
+.public-role-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 34px;
+  padding: 0.35rem 0.65rem;
+  border-radius: 999px;
+  background: #eef5ff;
+  color: #0d6efd;
+  font-size: 0.8rem;
+  font-weight: 800;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.public-login-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  min-height: 34px;
+  padding: 0.35rem 0.55rem;
+  border-radius: 0;
+  color: #0d6efd;
+  background: transparent;
+  font-size: 0.88rem;
+  font-weight: 750;
+  text-decoration: none;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.public-login-link:hover {
+  color: #0a58ca;
+}
+
+.public-register-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 34px;
+  padding: 0.4rem 0.7rem;
+  border-radius: 999px;
+  color: #ffffff;
+  background: #0d6efd;
+  font-size: 0.84rem;
+  font-weight: 800;
+  text-decoration: none;
+  line-height: 1;
+  white-space: nowrap;
+  box-shadow: 0 10px 22px rgba(13, 110, 253, 0.18);
+}
+
+.public-register-link:hover {
+  color: #ffffff;
+  background: #0b5ed7;
+}
+
+.public-logout-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  min-height: 34px;
+  border: 0;
+  padding: 0.4rem 0.7rem;
+  border-radius: 999px;
+  color: #ffffff;
+  background: #dc3545;
+  font-size: 0.84rem;
+  font-weight: 800;
+  line-height: 1;
+  white-space: nowrap;
+  transition: 0.18s ease;
+}
+
+.public-logout-button:hover {
+  background: #bb2d3b;
+}
+
+/* =========================
+   Home / Auth / Generic Cards
+========================= */
 
 .hero-section {
   background: transparent;
@@ -67,30 +253,6 @@ body {
   place-items: center;
 }
 
-.btn {
-  border-radius: 14px;
-}
-
-.form-control,
-.form-select {
-  border-radius: 14px;
-  padding: 12px 14px;
-}
-
-.navbar {
-  backdrop-filter: blur(16px);
-  z-index: 1050;
-}
-
-.nav-user-email {
-  color: #64748b;
-  font-size: 14px;
-  max-width: 220px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 /* =========================
    Dashboard Layout
 ========================= */
@@ -124,6 +286,10 @@ body {
   margin-bottom: 28px;
 }
 
+.dashboard-logo:hover {
+  color: #0a58ca;
+}
+
 .dashboard-user-box {
   display: flex;
   align-items: center;
@@ -144,11 +310,13 @@ body {
   display: grid;
   place-items: center;
   font-weight: 800;
+  flex: 0 0 auto;
 }
 
 .dashboard-user-box strong {
   display: block;
   font-size: 14px;
+  word-break: break-word;
 }
 
 .dashboard-user-box small {
@@ -187,7 +355,12 @@ body {
   display: flex;
   align-items: center;
   gap: 10px;
-  font-weight: 600;
+  font-weight: 700;
+  transition: 0.2s ease;
+}
+
+.dashboard-logout:hover {
+  background: #fecaca;
 }
 
 .dashboard-main {
@@ -196,13 +369,14 @@ body {
 }
 
 .dashboard-header {
-  height: 86px;
-  background: rgba(255, 255, 255, 0.86);
+  min-height: 86px;
+  background: rgba(255, 255, 255, 0.9);
   border-bottom: 1px solid rgba(226, 232, 240, 0.9);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 32px;
+  gap: 1rem;
+  padding: 18px 32px;
   backdrop-filter: blur(16px);
   position: sticky;
   top: 0;
@@ -219,6 +393,13 @@ body {
   color: #64748b;
 }
 
+.dashboard-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 0 0 auto;
+}
+
 .dashboard-role-badge {
   display: flex;
   align-items: center;
@@ -228,30 +409,76 @@ body {
   padding: 10px 14px;
   border-radius: 999px;
   font-weight: 700;
+  white-space: nowrap;
+}
+
+.dashboard-top-logout {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border: 0;
+  padding: 0.6rem 0.9rem;
+  border-radius: 999px;
+  color: #ffffff;
+  background: #dc3545;
+  font-size: 0.9rem;
+  font-weight: 800;
+  line-height: 1;
+  white-space: nowrap;
+  transition: 0.18s ease;
+}
+
+.dashboard-top-logout:hover {
+  background: #bb2d3b;
 }
 
 .dashboard-content {
-  padding: 32px;
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 28px;
+}
+
+.dashboard-page {
+  width: 100%;
+}
+
+.dashboard-page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.dashboard-page-role {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  min-height: 42px;
+  padding: 0.55rem 0.9rem;
+  border-radius: 999px;
+  background: #eef5ff;
+  color: #0d6efd;
+  font-size: 0.9rem;
+  font-weight: 800;
+  white-space: nowrap;
 }
 
 /* =========================
-   Offers Page
+   Search / Autocomplete
 ========================= */
-
-.search-card,
-.offer-card,
-.empty-state {
-  background: rgba(255, 255, 255, 0.9);
-  border: 1px solid rgba(226, 232, 240, 0.9);
-  border-radius: 24px;
-  padding: 24px;
-  backdrop-filter: blur(14px);
-}
 
 .search-card {
   position: relative;
   z-index: 20;
   overflow: visible;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  border-radius: 24px;
+  padding: 24px;
+  backdrop-filter: blur(14px);
 }
 
 .search-card .row {
@@ -313,6 +540,36 @@ body {
 .autocomplete-item.disabled:hover {
   background: transparent;
   color: #94a3b8;
+}
+
+.input-icon-box {
+  position: relative;
+}
+
+.input-icon-box svg {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #64748b;
+  z-index: 2;
+}
+
+.input-icon-box .form-control {
+  padding-left: 44px;
+}
+
+/* =========================
+   Offers Page
+========================= */
+
+.offer-card,
+.empty-state {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  border-radius: 24px;
+  padding: 24px;
+  backdrop-filter: blur(14px);
 }
 
 .offers-grid-layer {
@@ -494,7 +751,7 @@ body {
 }
 
 /* =========================
-   Regular Reservation Page
+   Regular / Simple Reservation Pages
 ========================= */
 
 .regular-reservation-header {
@@ -508,23 +765,6 @@ body {
   padding: 32px;
   backdrop-filter: blur(14px);
   box-shadow: 0 18px 40px rgba(15, 23, 42, 0.06);
-}
-
-.input-icon-box {
-  position: relative;
-}
-
-.input-icon-box svg {
-  position: absolute;
-  left: 14px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #64748b;
-  z-index: 2;
-}
-
-.input-icon-box .form-control {
-  padding-left: 44px;
 }
 
 /* =========================
@@ -545,12 +785,12 @@ body {
   display: flex;
   align-items: center;
   gap: 16px;
-  padding: 22px;
+  padding: 20px;
 }
 
 .stat-icon {
-  width: 52px;
-  height: 52px;
+  width: 50px;
+  height: 50px;
   border-radius: 18px;
   display: grid;
   place-items: center;
@@ -564,13 +804,13 @@ body {
 
 .dashboard-stat-card strong {
   display: block;
-  font-size: 28px;
+  font-size: 26px;
   font-weight: 900;
   color: #172033;
 }
 
 .dashboard-section {
-  padding: 24px;
+  padding: 22px;
 }
 
 .section-header {
@@ -594,7 +834,7 @@ body {
 }
 
 .mini-card {
-  padding: 20px;
+  padding: 18px;
   height: 100%;
 }
 
@@ -644,7 +884,35 @@ body {
    Responsive
 ========================= */
 
-@media (max-width: 992px) {
+@media (max-width: 1199.98px) {
+  .public-navbar-inner {
+    padding: 0 0.85rem;
+  }
+
+  .public-nav-link,
+  .public-login-link,
+  .public-register-link,
+  .public-logout-button,
+  .public-role-badge {
+    font-size: 0.78rem;
+    padding-left: 0.32rem;
+    padding-right: 0.32rem;
+  }
+}
+
+@media (max-width: 991.98px) {
+  .public-navbar-inner {
+    min-height: auto;
+    padding: 0.7rem 0.85rem;
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .public-navbar-links {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
   .dashboard-shell {
     flex-direction: column;
   }
@@ -657,16 +925,28 @@ body {
     border-bottom: 1px solid rgba(226, 232, 240, 0.9);
   }
 
+  .dashboard-header {
+    align-items: flex-start;
+    flex-direction: column;
+    padding: 18px 22px;
+  }
+
+  .dashboard-header-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
   .dashboard-content {
+    max-width: 100%;
     padding: 22px;
   }
 
-  .dashboard-header {
-    padding: 0 22px;
+  .dashboard-page-header {
+    flex-direction: column;
   }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 767.98px) {
   .route-details {
     flex-direction: column;
     align-items: flex-start;
@@ -677,7 +957,44 @@ body {
     flex: unset;
   }
 
-  .regular-reservation-card {
+  .regular-reservation-card,
+  .offer-details-card {
     padding: 22px;
+  }
+
+  .price-box {
+    width: 100%;
+  }
+}
+
+@media (max-width: 575.98px) {
+  .public-brand {
+    font-size: 1rem;
+  }
+
+  .public-navbar-links {
+    gap: 0.05rem;
+  }
+
+  .public-nav-link,
+  .public-login-link,
+  .public-register-link,
+  .public-logout-button,
+  .public-role-badge {
+    font-size: 0.72rem;
+    min-height: 32px;
+    padding-left: 0.26rem;
+    padding-right: 0.26rem;
+  }
+
+  .dashboard-content {
+    padding: 16px;
+  }
+
+  .dashboard-section,
+  .search-card,
+  .offer-card,
+  .mini-card {
+    padding: 18px;
   }
 }

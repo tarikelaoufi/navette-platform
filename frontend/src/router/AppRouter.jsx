@@ -8,6 +8,7 @@ import HomePage from "../pages/public/HomePage";
 import OffersPage from "../pages/public/OffersPage";
 import OfferDetailsPage from "../pages/public/OfferDetailsPage";
 import RegularReservationPage from "../pages/public/RegularReservationPage";
+import SimpleReservationPage from "../pages/public/SimpleReservationPage";
 
 import LoginPage from "../pages/auth/LoginPage";
 import RegisterPage from "../pages/auth/RegisterPage";
@@ -23,6 +24,7 @@ export default function AppRouter() {
                 <Route path="/" element={<HomePage />} />
                 <Route path="/offers" element={<OffersPage />} />
                 <Route path="/offers/:id" element={<OfferDetailsPage />} />
+                <Route path="/simple-reservation" element={<SimpleReservationPage />} />
                 <Route path="/regular-reservation" element={<RegularReservationPage />} />
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/register" element={<RegisterPage />} />

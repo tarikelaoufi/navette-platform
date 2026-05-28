@@ -42,6 +42,14 @@ public class OfferService {
             throw new RuntimeException("This shuttle does not belong to this company");
         }
 
+        if (request.getDepartureCityId().equals(request.getArrivalCityId())) {
+            throw new RuntimeException("Departure city and arrival city must be different");
+        }
+
+        if (request.getEndDate().isBefore(request.getStartDate())) {
+            throw new RuntimeException("End date must be after start date");
+        }
+
         Offer offer = Offer.builder()
                 .company(company)
                 .shuttle(shuttle)
@@ -53,6 +61,7 @@ public class OfferService {
                 .startDate(request.getStartDate())
                 .endDate(request.getEndDate())
                 .price(request.getPrice())
+                .ticketPrice(request.getTicketPrice())
                 .totalPlaces(request.getTotalPlaces())
                 .availablePlaces(request.getTotalPlaces())
                 .description(request.getDescription())
@@ -117,6 +126,14 @@ public class OfferService {
             throw new RuntimeException("This shuttle does not belong to this company");
         }
 
+        if (request.getDepartureCityId().equals(request.getArrivalCityId())) {
+            throw new RuntimeException("Departure city and arrival city must be different");
+        }
+
+        if (request.getEndDate().isBefore(request.getStartDate())) {
+            throw new RuntimeException("End date must be after start date");
+        }
+
         offer.setCompany(company);
         offer.setShuttle(shuttle);
         offer.setDepartureCity(departureCity);
@@ -127,6 +144,7 @@ public class OfferService {
         offer.setStartDate(request.getStartDate());
         offer.setEndDate(request.getEndDate());
         offer.setPrice(request.getPrice());
+        offer.setTicketPrice(request.getTicketPrice());
         offer.setTotalPlaces(request.getTotalPlaces());
         offer.setDescription(request.getDescription());
 
@@ -150,22 +168,33 @@ public class OfferService {
     private OfferResponse mapToResponse(Offer offer) {
         return OfferResponse.builder()
                 .id(offer.getId())
+
                 .companyId(offer.getCompany().getId())
                 .companyName(offer.getCompany().getCompanyName())
+
                 .shuttleId(offer.getShuttle().getId())
                 .shuttleName(offer.getShuttle().getName())
+
                 .departureCityId(offer.getDepartureCity().getId())
                 .departureCityName(offer.getDepartureCity().getName())
+
                 .arrivalCityId(offer.getArrivalCity().getId())
                 .arrivalCityName(offer.getArrivalCity().getName())
+
                 .title(offer.getTitle())
+
                 .departureTime(offer.getDepartureTime())
                 .arrivalTime(offer.getArrivalTime())
+
                 .startDate(offer.getStartDate())
                 .endDate(offer.getEndDate())
+
                 .price(offer.getPrice())
+                .ticketPrice(offer.getTicketPrice())
+
                 .totalPlaces(offer.getTotalPlaces())
                 .availablePlaces(offer.getAvailablePlaces())
+
                 .status(offer.getStatus())
                 .description(offer.getDescription())
                 .build();

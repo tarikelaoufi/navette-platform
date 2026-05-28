@@ -1,12 +1,11 @@
 import { Link, Outlet, useNavigate } from "react-router-dom";
-import { Bus, CalendarDays, LogOut, User } from "lucide-react";
+import { Bus, LogOut, User } from "lucide-react";
 
 export default function PublicLayout() {
     const navigate = useNavigate();
 
     const token = localStorage.getItem("token");
     const role = localStorage.getItem("role");
-    const email = localStorage.getItem("email");
 
     const isLoggedIn = Boolean(token);
 
@@ -29,65 +28,59 @@ export default function PublicLayout() {
 
     return (
         <div className="app-shell">
-            <nav className="navbar navbar-expand-lg bg-white border-bottom sticky-top">
-                <div className="container">
-                    <Link
-                        className="navbar-brand fw-bold d-flex align-items-center gap-2"
-                        to="/"
-                    >
-                        <Bus size={24} />
-                        Navette Platform
+            <nav className="public-top-navbar">
+                <div className="public-navbar-inner">
+                    <Link className="public-brand" to="/">
+                        <Bus size={22} />
+                        <span>Navette</span>
                     </Link>
 
-                    <div className="d-flex align-items-center gap-2 flex-wrap justify-content-end">
-                        <Link className="btn btn-link text-decoration-none" to="/">
+                    <div className="public-navbar-links">
+                        <Link className="public-nav-link" to="/">
                             Accueil
                         </Link>
 
-                        <Link className="btn btn-link text-decoration-none" to="/offers">
+                        <Link className="public-nav-link" to="/simple-reservation">
+                            Acheter un billet
+                        </Link>
+
+                        <Link className="public-nav-link" to="/offers">
                             Navettes disponibles
                         </Link>
 
-                        <Link
-                            className="btn btn-link text-decoration-none d-flex align-items-center gap-1"
-                            to="/regular-reservation"
-                        >
-                            <CalendarDays size={17} />
-                            Demander une navette
+                        <Link className="public-nav-link" to="/regular-reservation">
+                            Planifier une navette
                         </Link>
 
-                        {!isLoggedIn ? (
+                        {isLoggedIn ? (
                             <>
-                                <Link
-                                    className="btn btn-outline-primary d-flex align-items-center gap-2"
-                                    to="/login"
-                                >
-                                    <User size={18} />
-                                    Connexion
-                                </Link>
-
-                                <Link className="btn btn-primary" to="/register">
-                                    Créer un compte
-                                </Link>
-                            </>
-                        ) : (
-                            <>
-                                <Link className="btn btn-outline-primary" to={getDashboardPath()}>
+                                <Link className="public-nav-link" to={getDashboardPath()}>
                                     Dashboard
                                 </Link>
 
-                                <span className="nav-user-email d-none d-lg-inline">
-                  {email}
+                                <span className="public-role-badge">
+                  {role}
                 </span>
 
                                 <button
                                     type="button"
-                                    className="btn btn-danger d-flex align-items-center gap-2"
+                                    className="public-logout-button"
                                     onClick={handleLogout}
                                 >
-                                    <LogOut size={18} />
+                                    <LogOut size={16} />
                                     Déconnexion
                                 </button>
+                            </>
+                        ) : (
+                            <>
+                                <Link className="public-login-link" to="/login">
+                                    <User size={16} />
+                                    Connexion
+                                </Link>
+
+                                <Link className="public-register-link" to="/register">
+                                    Créer un compte
+                                </Link>
                             </>
                         )}
                     </div>

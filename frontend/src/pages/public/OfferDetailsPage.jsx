@@ -2,11 +2,15 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
     ArrowLeft,
+    Building2,
     Bus,
     CalendarDays,
+    CheckCircle2,
     Clock,
+    Info,
+    Ticket,
     Users,
-    Building2,
+    WalletCards,
 } from "lucide-react";
 import api from "../../api/axios";
 
@@ -22,7 +26,32 @@ export default function OfferDetailsPage() {
     const [subscriptionLoading, setSubscriptionLoading] = useState(false);
 
     const [error, setError] = useState("");
+    const [dateError, setDateError] = useState("");
     const [success, setSuccess] = useState("");
+
+    const token = localStorage.getItem("token");
+    const role = localStorage.getItem("role");
+    const userId = localStorage.getItem("userId");
+
+    const loadOffer = async () => {
+        setError("");
+
+        try {
+            const response = await api.get(`/api/offers/${id}`);
+
+            setOffer(response.data);
+
+            if (!travelDate) {
+                const minimumDate = getMinimumTravelDate(response.data.startDate);
+                setTravelDate(minimumDate);
+            }
+        } catch (error) {
+            console.error("OFFER DETAILS ERROR:", error);
+            setError("Impossible de charger les détails de l’offre.");
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
         let isMounted = true;
@@ -30,10 +59,12 @@ export default function OfferDetailsPage() {
         api
             .get(`/api/offers/${id}`)
             .then((response) => {
-                if (isMounted) {
-                    setOffer(response.data);
-                    setTravelDate(response.data.startDate || "");
-                }
+                if (!isMounted) return;
+
+                setOffer(response.data);
+
+                const minimumDate = getMinimumTravelDate(response.data.startDate);
+                setTravelDate(minimumDate);
             })
             .catch((error) => {
                 console.error("OFFER DETAILS ERROR:", error);
@@ -54,53 +85,118 @@ export default function OfferDetailsPage() {
     }, [id]);
 
     const checkUserAccess = () => {
-        const token = localStorage.getItem("token");
-        const role = localStorage.getItem("role");
-
         if (!token) {
             navigate("/login");
             return false;
         }
 
         if (role !== "ROLE_USER") {
-            setError("Seul un utilisateur peut réserver ou s’abonner à une navette.");
+            setError("Seul un utilisateur peut réserver un billet ou s’abonner.");
+            return false;
+        }
+
+        if (!userId) {
+            setError("Utilisateur introuvable. Veuillez vous reconnecter.");
             return false;
         }
 
         return true;
     };
 
-    const handleReservation = async () => {
-        if (!checkUserAccess()) return;
+    const validateTravelDate = () => {
+        setDateError("");
 
         if (!travelDate) {
-            setError("Veuillez choisir une date de trajet.");
+            setDateError("Veuillez choisir une date de trajet.");
+            return false;
+        }
+
+        const minimumDate = getMinimumTravelDate(offer?.startDate);
+
+        if (travelDate < minimumDate) {
+            setDateError(
+                `La date du trajet doit être aujourd’hui ou après le ${formatDisplayDate(
+                    minimumDate
+                )}.`
+            );
+            return false;
+        }
+
+        if (offer?.endDate && travelDate > offer.endDate) {
+            setDateError(
+                `La date du trajet doit être avant le ${formatDisplayDate(offer.endDate)}.`
+            );
+            return false;
+        }
+
+        return true;
+    };
+
+    const handleTravelDateChange = (event) => {
+        const selectedDate = event.target.value;
+        setTravelDate(selectedDate);
+        setDateError("");
+        setError("");
+        setSuccess("");
+
+        if (!offer) return;
+
+        const minimumDate = getMinimumTravelDate(offer.startDate);
+
+        if (selectedDate && selectedDate < minimumDate) {
+            setDateError(
+                `Date invalide : choisissez aujourd’hui ou une date après le ${formatDisplayDate(
+                    minimumDate
+                )}.`
+            );
             return;
         }
 
-        const userId = localStorage.getItem("userId");
+        if (offer.endDate && selectedDate > offer.endDate) {
+            setDateError(
+                `Date invalide : l’offre se termine le ${formatDisplayDate(offer.endDate)}.`
+            );
+        }
+    };
+
+    const handleReservation = async () => {
+        if (!checkUserAccess()) return;
+        if (!validateTravelDate()) return;
 
         setReservationLoading(true);
         setError("");
         setSuccess("");
 
         try {
-            await api.post("/api/user/reservations", {
+            const response = await api.post("/api/user/reservations", {
                 userId: Number(userId),
                 offerId: Number(id),
                 travelDate,
             });
 
-            setSuccess("Billet réservé avec succès.");
+            const reservationStatus = response.data?.status;
+            const amount = response.data?.amount;
 
-            const response = await api.get(`/api/offers/${id}`);
-            setOffer(response.data);
+            if (reservationStatus === "EN_ATTENTE") {
+                setSuccess(
+                    `Votre demande de billet simple a été envoyée. Montant : ${amount} MAD. La société doit l’accepter avant confirmation.`
+                );
+            } else {
+                setSuccess("Votre réservation a été envoyée avec succès.");
+            }
+
+            await loadOffer();
         } catch (error) {
             console.error("RESERVATION ERROR:", error);
-            setError(
+
+            const backendMessage =
                 error.response?.data?.message ||
                 error.response?.data?.error ||
-                "Impossible de réserver le billet."
+                getValidationMessage(error.response?.data);
+
+            setError(
+                backendMessage ||
+                "Impossible d’envoyer la demande de réservation. Vérifiez la date choisie."
             );
         } finally {
             setReservationLoading(false);
@@ -109,8 +205,6 @@ export default function OfferDetailsPage() {
 
     const handleSubscription = async () => {
         if (!checkUserAccess()) return;
-
-        const userId = localStorage.getItem("userId");
 
         setSubscriptionLoading(true);
         setError("");
@@ -126,8 +220,7 @@ export default function OfferDetailsPage() {
 
             setSuccess("Abonnement à la navette effectué avec succès.");
 
-            const response = await api.get(`/api/offers/${id}`);
-            setOffer(response.data);
+            await loadOffer();
         } catch (error) {
             console.error("SUBSCRIPTION ERROR:", error);
             setError(
@@ -139,6 +232,10 @@ export default function OfferDetailsPage() {
             setSubscriptionLoading(false);
         }
     };
+
+    const isOfferFull = Number(offer?.availablePlaces || 0) <= 0;
+    const isOfferOpen = offer?.status === "OUVERTE";
+    const minimumTravelDate = getMinimumTravelDate(offer?.startDate);
 
     if (loading) {
         return (
@@ -183,7 +280,7 @@ export default function OfferDetailsPage() {
             <div className="offer-details-card">
                 <div className="d-flex flex-column flex-lg-row justify-content-between gap-4 mb-4">
                     <div>
-            <span className="badge bg-success-subtle text-success mb-3">
+            <span className={`badge mb-3 ${getOfferBadgeClass(offer.status)}`}>
               {offer.status}
             </span>
 
@@ -194,21 +291,39 @@ export default function OfferDetailsPage() {
                         </p>
                     </div>
 
-                    <div className="price-box">
-                        <small>Prix</small>
-                        <strong>{offer.price} MAD</strong>
+                    <div className="d-flex flex-column flex-sm-row gap-3">
+                        <div className="price-box">
+                            <small>Billet simple</small>
+                            <strong>{formatPrice(offer.ticketPrice)} MAD</strong>
+                        </div>
+
+                        <div className="price-box">
+                            <small>Abonnement</small>
+                            <strong>{formatPrice(offer.price)} MAD</strong>
+                        </div>
                     </div>
                 </div>
 
                 {success && (
-                    <div className="alert alert-success" role="alert">
-                        {success}
+                    <div className="alert alert-success d-flex gap-2" role="alert">
+                        <CheckCircle2 size={20} />
+                        <div>{success}</div>
                     </div>
                 )}
 
                 {error && (
                     <div className="alert alert-danger" role="alert">
                         {error}
+                    </div>
+                )}
+
+                {!isOfferOpen && (
+                    <div className="alert alert-warning d-flex gap-2" role="alert">
+                        <Info size={20} />
+                        <div>
+                            Cette offre n’est pas ouverte actuellement. La réservation peut être
+                            indisponible.
+                        </div>
                     </div>
                 )}
 
@@ -240,7 +355,7 @@ export default function OfferDetailsPage() {
                     <div className="col-md-6 col-xl-3">
                         <div className="detail-box">
                             <CalendarDays size={22} />
-                            <small>Période</small>
+                            <small>Période de l’offre</small>
                             <strong>
                                 {offer.startDate} / {offer.endDate}
                             </strong>
@@ -261,7 +376,7 @@ export default function OfferDetailsPage() {
                         <div className="detail-box">
                             <Bus size={22} />
                             <small>Navette</small>
-                            <strong>{offer.shuttleName}</strong>
+                            <strong>{offer.shuttleName || "-"}</strong>
                         </div>
                     </div>
                 </div>
@@ -271,47 +386,175 @@ export default function OfferDetailsPage() {
 
                     <div>
                         <small>Société de transport</small>
-                        <strong>{offer.companyName}</strong>
+                        <strong>{offer.companyName || "-"}</strong>
                     </div>
                 </div>
 
-                <div className="action-box mb-4">
-                    <div>
-                        <label className="form-label">Date du trajet</label>
-                        <input
-                            type="date"
-                            className="form-control"
-                            min={offer.startDate}
-                            max={offer.endDate}
-                            value={travelDate}
-                            onChange={(event) => setTravelDate(event.target.value)}
-                        />
-                        <small className="text-muted">
-                            La date doit être entre {offer.startDate} et {offer.endDate}.
-                        </small>
+                <div className="row g-4 mb-4">
+                    <div className="col-lg-6">
+                        <div className="action-box h-100">
+                            <div className="d-flex align-items-center gap-2 mb-2">
+                                <Ticket size={22} className="text-primary" />
+                                <h5 className="fw-bold mb-0">Réserver un billet simple</h5>
+                            </div>
+
+                            <p className="text-muted mb-3">
+                                Choisissez une date de trajet. Votre demande sera envoyée à la
+                                société, puis elle pourra l’accepter ou la refuser.
+                            </p>
+
+                            <label className="form-label">Date du trajet</label>
+
+                            <input
+                                type="date"
+                                className={`form-control ${dateError ? "is-invalid" : ""}`}
+                                min={minimumTravelDate}
+                                max={offer.endDate}
+                                value={travelDate}
+                                onChange={handleTravelDateChange}
+                            />
+
+                            {dateError ? (
+                                <div className="invalid-feedback d-block">{dateError}</div>
+                            ) : (
+                                <small className="text-muted">
+                                    La date doit être entre {formatDisplayDate(minimumTravelDate)} et{" "}
+                                    {formatDisplayDate(offer.endDate)}.
+                                </small>
+                            )}
+
+                            <div className="mt-3">
+                                <small className="text-muted">Prix du billet simple</small>
+                                <h4 className="fw-bold mb-0">
+                                    {formatPrice(offer.ticketPrice)} MAD
+                                </h4>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="col-lg-6">
+                        <div className="action-box h-100">
+                            <div className="d-flex align-items-center gap-2 mb-2">
+                                <WalletCards size={22} className="text-primary" />
+                                <h5 className="fw-bold mb-0">S’abonner à la navette</h5>
+                            </div>
+
+                            <p className="text-muted mb-3">
+                                L’abonnement couvre la période de l’offre. Le montant affiché ici
+                                est différent du prix du billet simple.
+                            </p>
+
+                            <small className="text-muted">Période</small>
+                            <p className="fw-bold mb-3">
+                                {offer.startDate} / {offer.endDate}
+                            </p>
+
+                            <small className="text-muted">Prix abonnement</small>
+                            <h4 className="fw-bold mb-0">{formatPrice(offer.price)} MAD</h4>
+                        </div>
                     </div>
                 </div>
+
+                {isOfferFull && (
+                    <div className="alert alert-warning" role="alert">
+                        Cette navette est complète. Aucune nouvelle réservation ne peut être
+                        demandée pour le moment.
+                    </div>
+                )}
 
                 <div className="d-flex flex-wrap gap-3">
                     <button
                         type="button"
                         className="btn btn-primary btn-lg"
                         onClick={handleReservation}
-                        disabled={reservationLoading || offer.availablePlaces <= 0}
+                        disabled={reservationLoading || isOfferFull || !isOfferOpen || Boolean(dateError)}
                     >
-                        {reservationLoading ? "Réservation..." : "Réserver un billet"}
+                        {reservationLoading
+                            ? "Envoi de la demande..."
+                            : "Demander le billet simple"}
                     </button>
 
                     <button
                         type="button"
                         className="btn btn-outline-primary btn-lg"
                         onClick={handleSubscription}
-                        disabled={subscriptionLoading || offer.availablePlaces <= 0}
+                        disabled={subscriptionLoading || isOfferFull || !isOfferOpen}
                     >
                         {subscriptionLoading ? "Abonnement..." : "S’abonner à la navette"}
                     </button>
                 </div>
+
+                <div className="mt-4 p-3 rounded border bg-light">
+                    <small className="text-muted d-block mb-1">Rappel</small>
+                    <p className="mb-0">
+                        Le billet simple passe d’abord en statut <strong>EN_ATTENTE</strong>.
+                        Il devient <strong>CONFIRMEE</strong> seulement après acceptation par
+                        la société de transport.
+                    </p>
+                </div>
             </div>
         </div>
     );
+}
+
+function getMinimumTravelDate(startDate) {
+    const today = new Date().toISOString().split("T")[0];
+
+    if (!startDate) {
+        return today;
+    }
+
+    return startDate > today ? startDate : today;
+}
+
+function formatDisplayDate(value) {
+    if (!value) return "-";
+
+    return new Date(`${value}T00:00:00`).toLocaleDateString("fr-FR");
+}
+
+function formatPrice(value) {
+    if (value === null || value === undefined || value === "") {
+        return "-";
+    }
+
+    return Number(value).toFixed(2);
+}
+
+function getValidationMessage(data) {
+    if (!data) return "";
+
+    if (typeof data === "string") {
+        return data;
+    }
+
+    if (data.message) {
+        return data.message;
+    }
+
+    if (data.error) {
+        return data.error;
+    }
+
+    if (Array.isArray(data.errors) && data.errors.length > 0) {
+        return data.errors[0].defaultMessage || data.errors[0].message || "";
+    }
+
+    return "";
+}
+
+function getOfferBadgeClass(status) {
+    if (status === "OUVERTE") {
+        return "bg-success-subtle text-success";
+    }
+
+    if (status === "COMPLETE") {
+        return "bg-danger-subtle text-danger";
+    }
+
+    if (status === "FERMEE") {
+        return "bg-secondary-subtle text-secondary";
+    }
+
+    return "bg-primary-subtle text-primary";
 }

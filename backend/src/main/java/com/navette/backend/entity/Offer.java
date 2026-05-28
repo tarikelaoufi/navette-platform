@@ -52,8 +52,19 @@ public class Offer {
     @Column(nullable = false)
     private LocalDate endDate;
 
+    /*
+     * Prix abonnement / prix global de l'offre navette.
+     * Exemple : 500 MAD.
+     */
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal price;
+
+    /*
+     * Prix billet simple / aller simple.
+     * Exemple : 25 MAD.
+     */
+    @Column(name = "ticket_price", nullable = false, precision = 10, scale = 2)
+    private BigDecimal ticketPrice;
 
     @Column(nullable = false)
     private Integer totalPlaces;
@@ -76,6 +87,10 @@ public class Offer {
 
         if (availablePlaces == null && totalPlaces != null) {
             availablePlaces = totalPlaces;
+        }
+
+        if (ticketPrice == null) {
+            ticketPrice = BigDecimal.ZERO;
         }
     }
 }

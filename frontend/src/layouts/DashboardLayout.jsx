@@ -8,6 +8,7 @@ import {
     Building2,
     CalendarDays,
     Search,
+    Ticket,
 } from "lucide-react";
 
 export default function DashboardLayout({ role }) {
@@ -28,16 +29,16 @@ export default function DashboardLayout({ role }) {
     };
 
     const getIcon = () => {
-        if (role === "admin") return <Shield size={22} />;
-        if (role === "company") return <Building2 size={22} />;
-        return <User size={22} />;
+        if (role === "admin") return <Shield size={20} />;
+        if (role === "company") return <Building2 size={20} />;
+        return <User size={20} />;
     };
 
     return (
         <div className="dashboard-shell">
             <aside className="dashboard-sidebar">
                 <Link to="/" className="dashboard-logo">
-                    <Bus size={26} />
+                    <Bus size={24} />
                     <span>Navette</span>
                 </Link>
 
@@ -58,34 +59,39 @@ export default function DashboardLayout({ role }) {
                         Accueil
                     </Link>
 
+                    <Link to="/simple-reservation" className="dashboard-link">
+                        <Ticket size={18} />
+                        Billet
+                    </Link>
+
                     <Link to="/offers" className="dashboard-link">
                         <Search size={18} />
-                        Navettes disponibles
+                        Horaires
                     </Link>
 
                     <Link to="/regular-reservation" className="dashboard-link">
                         <CalendarDays size={18} />
-                        Demander une navette
+                        Demande
                     </Link>
 
                     {role === "user" && (
                         <Link to="/user/dashboard" className="dashboard-link">
                             <User size={18} />
-                            Dashboard Utilisateur
+                            Mon espace
                         </Link>
                     )}
 
                     {role === "company" && (
                         <Link to="/company/dashboard" className="dashboard-link">
                             <Building2 size={18} />
-                            Dashboard Société
+                            Société
                         </Link>
                     )}
 
                     {role === "admin" && (
                         <Link to="/admin/dashboard" className="dashboard-link">
                             <Shield size={18} />
-                            Dashboard Admin
+                            Admin
                         </Link>
                     )}
                 </nav>
@@ -107,7 +113,7 @@ export default function DashboardLayout({ role }) {
                         <p>Bienvenue dans votre espace de gestion.</p>
                     </div>
 
-                    <div className="d-flex align-items-center gap-3">
+                    <div className="dashboard-header-actions">
                         <div className="dashboard-role-badge">
                             {getIcon()}
                             {storedRole}
@@ -115,10 +121,10 @@ export default function DashboardLayout({ role }) {
 
                         <button
                             type="button"
-                            className="btn btn-danger d-flex align-items-center gap-2"
+                            className="dashboard-top-logout"
                             onClick={handleLogout}
                         >
-                            <LogOut size={18} />
+                            <LogOut size={17} />
                             Déconnexion
                         </button>
                     </div>

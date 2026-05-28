@@ -38,7 +38,15 @@ public class OfferResponse {
     private LocalDate startDate;
     private LocalDate endDate;
 
+    /*
+     * Prix abonnement / prix global de l’offre navette.
+     */
     private BigDecimal price;
+
+    /*
+     * Prix billet simple / aller simple.
+     */
+    private BigDecimal ticketPrice;
 
     private Integer totalPlaces;
     private Integer availablePlaces;

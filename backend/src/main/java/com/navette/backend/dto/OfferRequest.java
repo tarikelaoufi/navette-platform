@@ -15,39 +15,51 @@ import java.time.LocalTime;
 @Setter
 public class OfferRequest {
 
-    @NotNull
+    @NotNull(message = "Company ID is required")
     private Long companyId;
 
-    @NotNull
+    @NotNull(message = "Shuttle ID is required")
     private Long shuttleId;
 
-    @NotNull
+    @NotNull(message = "Departure city ID is required")
     private Long departureCityId;
 
-    @NotNull
+    @NotNull(message = "Arrival city ID is required")
     private Long arrivalCityId;
 
-    @NotBlank
+    @NotBlank(message = "Title is required")
     private String title;
 
-    @NotNull
+    @NotNull(message = "Departure time is required")
     private LocalTime departureTime;
 
-    @NotNull
+    @NotNull(message = "Arrival time is required")
     private LocalTime arrivalTime;
 
-    @NotNull
+    @NotNull(message = "Start date is required")
     private LocalDate startDate;
 
-    @NotNull
+    @NotNull(message = "End date is required")
     private LocalDate endDate;
 
-    @NotNull
-    @DecimalMin("0.0")
+    /*
+     * Prix abonnement / prix global de l’offre navette.
+     * Exemple : 500 MAD pour abonnement.
+     */
+    @NotNull(message = "Subscription price is required")
+    @DecimalMin(value = "0.0", message = "Subscription price must be positive")
     private BigDecimal price;
 
-    @NotNull
-    @Min(1)
+    /*
+     * Prix billet simple / aller simple.
+     * Exemple : 25 MAD pour un billet.
+     */
+    @NotNull(message = "Ticket price is required")
+    @DecimalMin(value = "0.0", message = "Ticket price must be positive")
+    private BigDecimal ticketPrice;
+
+    @NotNull(message = "Total places is required")
+    @Min(value = 1, message = "Total places must be at least 1")
     private Integer totalPlaces;
 
     private String description;

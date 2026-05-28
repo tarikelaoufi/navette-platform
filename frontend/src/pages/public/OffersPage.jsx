@@ -1,6 +1,15 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { CalendarDays, MapPin, Search, Users, Clock, Bus } from "lucide-react";
+import {
+    CalendarDays,
+    MapPin,
+    Search,
+    Users,
+    Clock,
+    Bus,
+    Ticket,
+    WalletCards,
+} from "lucide-react";
 import api from "../../api/axios";
 
 export default function OffersPage() {
@@ -140,13 +149,14 @@ export default function OffersPage() {
             <div className="d-flex flex-column flex-lg-row justify-content-between gap-3 mb-4">
                 <div>
           <span className="badge bg-primary-subtle text-primary mb-3">
-            Offres publiques
+            Navettes disponibles
           </span>
 
-                    <h1 className="fw-bold mb-2">Offres disponibles</h1>
+                    <h1 className="fw-bold mb-2">Navettes disponibles</h1>
 
                     <p className="text-muted mb-0">
-                        Saisissez les villes pour rechercher une navette disponible.
+                        Consultez les horaires, le prix du billet simple et le prix
+                        d’abonnement pour chaque navette.
                     </p>
                 </div>
 
@@ -155,7 +165,7 @@ export default function OffersPage() {
                     className="btn btn-outline-primary align-self-start"
                     onClick={resetSearch}
                 >
-                    Afficher toutes les offres
+                    Afficher toutes les navettes
                 </button>
             </div>
 
@@ -198,7 +208,7 @@ export default function OffersPage() {
                                                 }}
                                             >
                                                 {city.name}
-                                                <small>{city.country}</small>
+                                                <small>{city.country || "Ville"}</small>
                                             </button>
                                         ))
                                     )}
@@ -244,7 +254,7 @@ export default function OffersPage() {
                                                 }}
                                             >
                                                 {city.name}
-                                                <small>{city.country}</small>
+                                                <small>{city.country || "Ville"}</small>
                                             </button>
                                         ))
                                     )}
@@ -279,13 +289,13 @@ export default function OffersPage() {
             {loading ? (
                 <div className="text-center py-5">
                     <div className="spinner-border text-primary" role="status" />
-                    <p className="text-muted mt-3">Chargement des offres...</p>
+                    <p className="text-muted mt-3">Chargement des navettes...</p>
                 </div>
             ) : offers.length === 0 ? (
                 <div className="empty-state">
                     <Bus size={44} />
 
-                    <h4>Aucune offre trouvée</h4>
+                    <h4>Aucune navette trouvée</h4>
 
                     <p>
                         Aucune navette ne correspond à votre recherche. Vous pouvez créer une
@@ -344,10 +354,23 @@ export default function OffersPage() {
                   </span>
                                 </div>
 
-                                <div className="d-flex justify-content-between align-items-center mt-4">
+                                <div className="d-flex justify-content-between align-items-center gap-3 mt-4">
                                     <div>
-                                        <small className="text-muted">Prix</small>
-                                        <h4 className="fw-bold mb-0">{offer.price} MAD</h4>
+                                        <div className="d-flex align-items-center gap-2 mb-1">
+                                            <Ticket size={17} />
+                                            <small className="text-muted">Billet simple</small>
+                                        </div>
+
+                                        <h4 className="fw-bold mb-1">
+                                            {formatPrice(offer.ticketPrice)} MAD
+                                        </h4>
+
+                                        <div className="d-flex align-items-center gap-2">
+                                            <WalletCards size={15} />
+                                            <small className="text-muted">
+                                                Abonnement : {formatPrice(offer.price)} MAD
+                                            </small>
+                                        </div>
                                     </div>
 
                                     <Link to={`/offers/${offer.id}`} className="btn btn-primary">
@@ -370,4 +393,12 @@ function normalizeText(value) {
         .toLowerCase()
         .normalize("NFD")
         .replace(/[\u0300-\u036f]/g, "");
+}
+
+function formatPrice(value) {
+    if (value === null || value === undefined || value === "") {
+        return "-";
+    }
+
+    return Number(value).toFixed(2);
 }

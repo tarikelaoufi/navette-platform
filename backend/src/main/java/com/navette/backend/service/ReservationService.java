@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Service
@@ -47,12 +48,18 @@ public class ReservationService {
             throw new RuntimeException("Travel date must be between offer start date and end date");
         }
 
+        BigDecimal ticketAmount = offer.getTicketPrice();
+
+        if (ticketAmount == null) {
+            throw new RuntimeException("Ticket price is not configured for this offer");
+        }
+
         Reservation reservation = Reservation.builder()
                 .user(user)
                 .offer(offer)
                 .travelDate(request.getTravelDate())
                 .status(ReservationStatus.EN_ATTENTE)
-                .amount(offer.getPrice())
+                .amount(ticketAmount)
                 .build();
 
         Reservation savedReservation = reservationRepository.save(reservation);
@@ -192,15 +199,26 @@ public class ReservationService {
 
         return ReservationResponse.builder()
                 .id(reservation.getId())
+
                 .userId(user.getId())
                 .userEmail(user.getEmail())
                 .userFullName(user.getFirstName() + " " + user.getLastName())
+
                 .offerId(offer.getId())
                 .offerTitle(offer.getTitle())
+
                 .departureCityName(offer.getDepartureCity().getName())
                 .arrivalCityName(offer.getArrivalCity().getName())
+
+                .departureTime(offer.getDepartureTime())
+                .arrivalTime(offer.getArrivalTime())
+
+                .companyName(offer.getCompany().getCompanyName())
+                .shuttleName(offer.getShuttle().getName())
+
                 .travelDate(reservation.getTravelDate())
                 .reservationDate(reservation.getReservationDate())
+
                 .status(reservation.getStatus())
                 .amount(reservation.getAmount())
                 .build();

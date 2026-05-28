@@ -2,13 +2,13 @@ import { useEffect, useState } from "react";
 import {
     Building2,
     Bus,
-    CalendarCheck,
     CalendarDays,
     Clock,
     MapPin,
     MessageSquareText,
     RefreshCw,
     Route,
+    Ticket,
     Users,
     WalletCards,
 } from "lucide-react";
@@ -66,51 +66,11 @@ export default function AdminDashboard() {
     };
 
     useEffect(() => {
-        let isMounted = true;
+        const timer = setTimeout(() => {
+            loadAdminData();
+        }, 0);
 
-        Promise.all([
-            api.get("/api/admin/stats"),
-            api.get("/api/admin/users"),
-            api.get("/api/admin/companies"),
-            api.get("/api/admin/offers"),
-            api.get("/api/admin/reservations"),
-            api.get("/api/admin/regular-reservations"),
-        ])
-            .then(
-                ([
-                     statsResponse,
-                     usersResponse,
-                     companiesResponse,
-                     offersResponse,
-                     reservationsResponse,
-                     demandsResponse,
-                 ]) => {
-                    if (!isMounted) return;
-
-                    setStats(statsResponse.data);
-                    setUsers(usersResponse.data);
-                    setCompanies(companiesResponse.data);
-                    setOffers(offersResponse.data);
-                    setReservations(reservationsResponse.data);
-                    setDemands(demandsResponse.data);
-                }
-            )
-            .catch((error) => {
-                console.error("ADMIN DASHBOARD ERROR:", error);
-
-                if (isMounted) {
-                    setError("Impossible de charger les données administrateur.");
-                }
-            })
-            .finally(() => {
-                if (isMounted) {
-                    setLoading(false);
-                }
-            });
-
-        return () => {
-            isMounted = false;
-        };
+        return () => clearTimeout(timer);
     }, []);
 
     if (loading) {
@@ -125,13 +85,13 @@ export default function AdminDashboard() {
     }
 
     return (
-        <div>
-            <div className="d-flex flex-column flex-lg-row justify-content-between gap-3 mb-4">
+        <div className="dashboard-page">
+            <div className="dashboard-page-header">
                 <div>
                     <h1 className="fw-bold mb-1">Tableau de bord administrateur</h1>
                     <p className="text-muted mb-0">
-                        Vue globale sur les utilisateurs, sociétés, offres, réservations et
-                        demandes de navette.
+                        Vue globale séparée sur les utilisateurs, sociétés, offres, billets
+                        simples, abonnements et demandes de navette.
                     </p>
                 </div>
 
@@ -182,17 +142,17 @@ export default function AdminDashboard() {
                 />
 
                 <StatCard
+                    title="Billets simples"
+                    value={stats?.totalReservations || reservations.length || 0}
+                    icon={<Ticket size={24} />}
+                    colorClass="bg-danger-subtle text-danger"
+                />
+
+                <StatCard
                     title="Abonnements"
                     value={stats?.totalSubscriptions || 0}
                     icon={<WalletCards size={24} />}
                     colorClass="bg-secondary-subtle text-secondary"
-                />
-
-                <StatCard
-                    title="Réservations"
-                    value={stats?.totalReservations || reservations.length || 0}
-                    icon={<CalendarCheck size={24} />}
-                    colorClass="bg-danger-subtle text-danger"
                 />
 
                 <StatCard
@@ -286,7 +246,7 @@ export default function AdminDashboard() {
 
             <section className="dashboard-section mb-4">
                 <div className="section-header">
-                    <h4>Offres</h4>
+                    <h4>Offres de navette</h4>
                     <span>{offers.length}</span>
                 </div>
 
@@ -322,8 +282,7 @@ export default function AdminDashboard() {
 
                                     <div className="mini-info">
                     <span>
-                      Société :{" "}
-                        {offer.company?.companyName || offer.companyName || "-"}
+                      Société : {offer.company?.companyName || offer.companyName || "-"}
                     </span>
 
                                         <span>
@@ -331,14 +290,23 @@ export default function AdminDashboard() {
                     </span>
 
                                         <span>
-                      Horaire : {offer.departureTime} → {offer.arrivalTime}
+                      Horaire : {offer.departureTime || "-"} →{" "}
+                                            {offer.arrivalTime || "-"}
                     </span>
 
                                         <span>
-                      Période : {offer.startDate} / {offer.endDate}
+                      Période : {offer.startDate || "-"} / {offer.endDate || "-"}
                     </span>
 
-                                        <span>Prix : {offer.price} MAD</span>
+                                        <span>
+                      <Ticket size={16} />
+                      Billet simple : {formatPrice(offer.ticketPrice)} MAD
+                    </span>
+
+                                        <span>
+                      <WalletCards size={16} />
+                      Abonnement : {formatPrice(offer.price)} MAD
+                    </span>
 
                                         <span>
                       Places : {offer.availablePlaces} / {offer.totalPlaces}
@@ -353,12 +321,12 @@ export default function AdminDashboard() {
 
             <section className="dashboard-section mb-4">
                 <div className="section-header">
-                    <h4>Réservations</h4>
+                    <h4>Billets simples des utilisateurs</h4>
                     <span>{reservations.length}</span>
                 </div>
 
                 {reservations.length === 0 ? (
-                    <EmptyBox message="Aucune réservation trouvée." />
+                    <EmptyBox message="Aucun billet simple trouvé." />
                 ) : (
                     <div className="row g-3">
                         {reservations.map((reservation) => (
@@ -366,19 +334,21 @@ export default function AdminDashboard() {
                                 <div className="mini-card">
                                     <div className="d-flex justify-content-between gap-3">
                                         <div>
+                      <span className="badge bg-primary-subtle text-primary mb-2">
+                        Billet simple
+                      </span>
+
                                             <h6 className="fw-bold mb-1">
                                                 {reservation.offer?.title ||
                                                     reservation.offerTitle ||
-                                                    `Réservation #${reservation.id}`}
+                                                    `Billet #${reservation.id}`}
                                             </h6>
 
                                             <p className="text-muted mb-2">
                                                 Utilisateur :{" "}
                                                 {reservation.user?.email ||
                                                     reservation.userEmail ||
-                                                    `ID ${
-                                                        reservation.user?.id || reservation.userId || "-"
-                                                    }`}
+                                                    `ID ${reservation.user?.id || reservation.userId || "-"}`}
                                             </p>
                                         </div>
 
@@ -404,14 +374,29 @@ export default function AdminDashboard() {
                                             {reservation.arrivalCityName || "-"}
                     </span>
 
-                                        <span>Date trajet : {reservation.travelDate}</span>
-
                                         <span>
-                      Date réservation :{" "}
-                                            {formatDateTime(reservation.reservationDate)}
+                      Horaire : {reservation.departureTime || "-"} →{" "}
+                                            {reservation.arrivalTime || "-"}
                     </span>
 
-                                        <span>Montant : {reservation.amount} MAD</span>
+                                        <span>Date trajet : {reservation.travelDate || "-"}</span>
+
+                                        <span>
+                      Date demande : {formatDateTime(reservation.reservationDate)}
+                    </span>
+
+                                        <span>
+                      Société : {reservation.companyName || "-"}
+                    </span>
+
+                                        <span>
+                      Navette : {reservation.shuttleName || "-"}
+                    </span>
+
+                                        <span>
+                      <Ticket size={16} />
+                      Prix billet : {formatPrice(reservation.amount)} MAD
+                    </span>
                                     </div>
                                 </div>
                             </div>
@@ -435,6 +420,10 @@ export default function AdminDashboard() {
                                 <div className="mini-card">
                                     <div className="d-flex justify-content-between gap-3">
                                         <div>
+                      <span className="badge bg-warning-subtle text-warning mb-2">
+                        Demande de navette
+                      </span>
+
                                             <h6 className="fw-bold mb-1">
                                                 {demand.departureCity?.name ||
                                                     demand.departureCityName ||
@@ -482,8 +471,7 @@ export default function AdminDashboard() {
 
                                         <span>
                       <CalendarDays size={16} />
-                      Dates : {demand.startDate || "-"} /{" "}
-                                            {demand.endDate || "-"}
+                      Dates : {demand.startDate || "-"} / {demand.endDate || "-"}
                     </span>
 
                                         {demand.notes && (
@@ -541,9 +529,7 @@ function OptionBadges({
     return (
         <div className="d-flex flex-wrap gap-2 mt-2">
             {hasWifi && (
-                <span className="badge bg-info-subtle text-info">
-          Wi-Fi{suffix}
-        </span>
+                <span className="badge bg-info-subtle text-info">Wi-Fi{suffix}</span>
             )}
 
             {hasAirConditioning && (
@@ -553,9 +539,7 @@ function OptionBadges({
             )}
 
             {hasUsbCharger && (
-                <span className="badge bg-success-subtle text-success">
-          USB{suffix}
-        </span>
+                <span className="badge bg-success-subtle text-success">USB{suffix}</span>
             )}
 
             {allowsLuggage && (
@@ -588,6 +572,14 @@ function formatDateTime(value) {
         dateStyle: "short",
         timeStyle: "short",
     });
+}
+
+function formatPrice(value) {
+    if (value === null || value === undefined || value === "") {
+        return "-";
+    }
+
+    return Number(value).toFixed(2);
 }
 
 function getReservationBadgeClass(status) {
