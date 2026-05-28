@@ -9,5 +9,9 @@ public interface TransportCompanyRepository extends JpaRepository<TransportCompa
 
     Optional<TransportCompany> findByUserId(Long userId);
 
+    Optional<TransportCompany> findByProfessionalEmail(String professionalEmail);
+
+    boolean existsByUserId(Long userId);
+
     boolean existsByProfessionalEmail(String professionalEmail);
 }

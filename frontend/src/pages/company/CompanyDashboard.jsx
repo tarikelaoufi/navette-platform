@@ -14,8 +14,10 @@ import {
 import api from "../../api/axios";
 
 export default function CompanyDashboard() {
-    const companyId = Number(localStorage.getItem("companyId") || 1);
+    const userId = localStorage.getItem("userId");
     const role = localStorage.getItem("role") || "ROLE_COMPANY";
+
+    const [company, setCompany] = useState(null);
 
     const [shuttles, setShuttles] = useState([]);
     const [offers, setOffers] = useState([]);
@@ -61,7 +63,21 @@ export default function CompanyDashboard() {
     const loadDashboardData = async () => {
         setError("");
 
+        if (!userId) {
+            setError("Utilisateur introuvable. Veuillez vous reconnecter.");
+            setLoading(false);
+            return;
+        }
+
         try {
+            const companyResponse = await api.get(`/api/company/me?userId=${userId}`);
+            const currentCompany = companyResponse.data;
+
+            setCompany(currentCompany);
+            localStorage.setItem("companyId", String(currentCompany.id));
+
+            const companyId = currentCompany.id;
+
             const [
                 shuttlesResponse,
                 offersResponse,
@@ -83,7 +99,11 @@ export default function CompanyDashboard() {
             setCities(citiesResponse.data);
         } catch (error) {
             console.error("COMPANY DASHBOARD ERROR:", error);
-            setError("Impossible de charger les données de votre espace société.");
+            setError(
+                error.response?.data?.message ||
+                error.response?.data?.error ||
+                "Impossible de charger les données de votre espace société."
+            );
         } finally {
             setLoading(false);
         }
@@ -96,6 +116,14 @@ export default function CompanyDashboard() {
 
         return () => clearTimeout(timer);
     }, []);
+
+    const getCompanyId = () => {
+        if (!company?.id) {
+            throw new Error("Société introuvable. Veuillez recharger la page.");
+        }
+
+        return company.id;
+    };
 
     const handleShuttleChange = (event) => {
         const { name, value, type, checked } = event.target;
@@ -123,6 +151,8 @@ export default function CompanyDashboard() {
         setSuccess("");
 
         try {
+            const companyId = getCompanyId();
+
             await api.post("/api/company/shuttles", {
                 companyId,
                 name: shuttleForm.name,
@@ -154,6 +184,7 @@ export default function CompanyDashboard() {
             setError(
                 error.response?.data?.message ||
                 error.response?.data?.error ||
+                error.message ||
                 "Impossible de créer la navette."
             );
         } finally {
@@ -174,6 +205,8 @@ export default function CompanyDashboard() {
         setSuccess("");
 
         try {
+            const companyId = getCompanyId();
+
             await api.post("/api/company/offers", {
                 companyId,
                 shuttleId: Number(offerForm.shuttleId),
@@ -213,6 +246,7 @@ export default function CompanyDashboard() {
             setError(
                 error.response?.data?.message ||
                 error.response?.data?.error ||
+                error.message ||
                 "Impossible de créer l’offre."
             );
         } finally {
@@ -285,14 +319,32 @@ export default function CompanyDashboard() {
         );
     }
 
+    if (!company && error) {
+        return (
+            <div className="dashboard-page">
+                <div className="alert alert-danger" role="alert">
+                    {error}
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="dashboard-page">
             <div className="dashboard-page-header">
                 <div>
                     <h1 className="fw-bold mb-1">Tableau de bord société</h1>
                     <p className="text-muted mb-0">
-                        Gérez vos navettes, offres, billets simples et demandes de navette.
+                        {company?.companyName
+                            ? `Espace de ${company.companyName}`
+                            : "Gérez vos navettes, offres, billets simples et demandes de navette."}
                     </p>
+
+                    {company && (
+                        <small className="text-muted">
+                            ID société : #{company.id} · Statut : {company.status}
+                        </small>
+                    )}
                 </div>
 
                 <div className="dashboard-page-role">
@@ -347,8 +399,8 @@ export default function CompanyDashboard() {
                 <div className="section-header">
                     <h4>Créer une navette</h4>
                     <span>
-            <Plus size={16} />
-          </span>
+                        <Plus size={16} />
+                    </span>
                 </div>
 
                 <form onSubmit={handleCreateShuttle}>
@@ -455,8 +507,8 @@ export default function CompanyDashboard() {
                 <div className="section-header">
                     <h4>Créer une offre</h4>
                     <span>
-            <Plus size={16} />
-          </span>
+                        <Plus size={16} />
+                    </span>
                 </div>
 
                 {shuttles.length === 0 ? (
@@ -659,9 +711,9 @@ export default function CompanyDashboard() {
                                 <div className="mini-card">
                                     <div className="d-flex justify-content-between gap-3">
                                         <div>
-                      <span className="badge bg-primary-subtle text-primary mb-2">
-                        Billet simple
-                      </span>
+                                            <span className="badge bg-primary-subtle text-primary mb-2">
+                                                Billet simple
+                                            </span>
 
                                             <h6 className="fw-bold mb-1">{reservation.offerTitle}</h6>
 
@@ -675,30 +727,30 @@ export default function CompanyDashboard() {
                                                 reservation.status
                                             )}`}
                                         >
-                      {reservation.status}
-                    </span>
+                                            {reservation.status}
+                                        </span>
                                     </div>
 
                                     <div className="mini-info">
-                    <span>
-                      <Users size={16} />
-                      Client : {reservation.userFullName}
-                    </span>
+                                        <span>
+                                            <Users size={16} />
+                                            Client : {reservation.userFullName}
+                                        </span>
 
                                         <span>
-                      <CalendarDays size={16} />
-                      Date du trajet : {reservation.travelDate}
-                    </span>
+                                            <CalendarDays size={16} />
+                                            Date du trajet : {reservation.travelDate}
+                                        </span>
 
                                         <span>
-                      <Clock size={16} />
-                      Demandé le : {formatDateTime(reservation.reservationDate)}
-                    </span>
+                                            <Clock size={16} />
+                                            Demandé le : {formatDateTime(reservation.reservationDate)}
+                                        </span>
 
                                         <span>
-                      <Ticket size={16} />
-                      Prix billet : {formatPrice(reservation.amount)} MAD
-                    </span>
+                                            <Ticket size={16} />
+                                            Prix billet : {formatPrice(reservation.amount)} MAD
+                                        </span>
                                     </div>
 
                                     <ReservationActions
@@ -728,9 +780,9 @@ export default function CompanyDashboard() {
                                 <div className="mini-card">
                                     <div className="d-flex justify-content-between gap-3">
                                         <div>
-                      <span className="badge bg-warning-subtle text-warning mb-2">
-                        Demande de navette
-                      </span>
+                                            <span className="badge bg-warning-subtle text-warning mb-2">
+                                                Demande de navette
+                                            </span>
 
                                             <h6 className="fw-bold mb-1">
                                                 {demand.departureCityName || demand.departureCity} →{" "}
@@ -747,33 +799,33 @@ export default function CompanyDashboard() {
                                                 demand.status
                                             )}`}
                                         >
-                      {demand.status}
-                    </span>
+                                            {demand.status}
+                                        </span>
                                     </div>
 
                                     <div className="mini-info">
-                    <span>
-                      <Clock size={16} />
-                      Heure souhaitée : {demand.desiredTime || "-"}
-                    </span>
+                                        <span>
+                                            <Clock size={16} />
+                                            Heure souhaitée : {demand.desiredTime || "-"}
+                                        </span>
 
                                         <span>
-                      <Users size={16} />
-                      Places souhaitées : {demand.seats || demand.interestedCount || 1}
-                    </span>
+                                            <Users size={16} />
+                                            Places souhaitées : {demand.seats || demand.interestedCount || 1}
+                                        </span>
 
                                         <span>
-                      <CalendarDays size={16} />
+                                            <CalendarDays size={16} />
                                             {demand.startDate && demand.endDate
                                                 ? `${demand.startDate} / ${demand.endDate}`
                                                 : `Créée le : ${formatDateTime(demand.createdAt)}`}
-                    </span>
+                                        </span>
 
                                         {demand.notes && (
                                             <span>
-                        <MapPin size={16} />
-                        Note : {demand.notes}
-                      </span>
+                                                <MapPin size={16} />
+                                                Note : {demand.notes}
+                                            </span>
                                         )}
 
                                         <OptionBadges
@@ -820,25 +872,25 @@ export default function CompanyDashboard() {
                                         </div>
 
                                         <span className="badge bg-primary-subtle text-primary align-self-start">
-                      {shuttle.status}
-                    </span>
+                                            {shuttle.status}
+                                        </span>
                                     </div>
 
                                     <div className="mini-info">
-                    <span>
-                      <Users size={16} />
-                      Capacité : {shuttle.capacity} places
-                    </span>
+                                        <span>
+                                            <Users size={16} />
+                                            Capacité : {shuttle.capacity} places
+                                        </span>
 
                                         <span>
-                      <Bus size={16} />
-                      Société : {shuttle.companyName}
-                    </span>
+                                            <Bus size={16} />
+                                            Société : {shuttle.companyName}
+                                        </span>
 
                                         <span>
-                      <MapPin size={16} />
+                                            <MapPin size={16} />
                                             {shuttle.description || "Aucune description."}
-                    </span>
+                                        </span>
 
                                         <OptionBadges
                                             hasWifi={shuttle.hasWifi}
@@ -877,40 +929,40 @@ export default function CompanyDashboard() {
                                         </div>
 
                                         <span className="badge bg-success-subtle text-success align-self-start">
-                      {offer.status}
-                    </span>
+                                            {offer.status}
+                                        </span>
                                     </div>
 
                                     <div className="mini-info">
-                    <span>
-                      <Clock size={16} />
-                        {offer.departureTime} → {offer.arrivalTime}
-                    </span>
+                                        <span>
+                                            <Clock size={16} />
+                                            {offer.departureTime} → {offer.arrivalTime}
+                                        </span>
 
                                         <span>
-                      <CalendarDays size={16} />
+                                            <CalendarDays size={16} />
                                             {offer.startDate} / {offer.endDate}
-                    </span>
+                                        </span>
 
                                         <span>
-                      <Ticket size={16} />
-                      Billet simple : {formatPrice(offer.ticketPrice)} MAD
-                    </span>
+                                            <Ticket size={16} />
+                                            Billet simple : {formatPrice(offer.ticketPrice)} MAD
+                                        </span>
 
                                         <span>
-                      <WalletCards size={16} />
-                      Abonnement : {formatPrice(offer.price)} MAD
-                    </span>
+                                            <WalletCards size={16} />
+                                            Abonnement : {formatPrice(offer.price)} MAD
+                                        </span>
 
                                         <span>
-                      <Users size={16} />
-                      Places : {offer.availablePlaces} / {offer.totalPlaces}
-                    </span>
+                                            <Users size={16} />
+                                            Places : {offer.availablePlaces} / {offer.totalPlaces}
+                                        </span>
 
                                         <span>
-                      <Bus size={16} />
-                      Navette : {offer.shuttleName}
-                    </span>
+                                            <Bus size={16} />
+                                            Navette : {offer.shuttleName}
+                                        </span>
                                     </div>
                                 </div>
                             </div>
@@ -1049,8 +1101,8 @@ function OptionBadges({
 
             {hasAirConditioning && (
                 <span className="badge bg-primary-subtle text-primary">
-          Climatisation{suffix}
-        </span>
+                    Climatisation{suffix}
+                </span>
             )}
 
             {hasUsbCharger && (
