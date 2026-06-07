@@ -74,13 +74,6 @@ export default function DashboardLayout({ role }) {
                         Demande
                     </Link>
 
-                    {role === "user" && (
-                        <Link to="/user/dashboard" className="dashboard-link">
-                            <User size={18} />
-                            Mon espace
-                        </Link>
-                    )}
-
                     {role === "company" && (
                         <Link to="/company/dashboard" className="dashboard-link">
                             <Building2 size={18} />

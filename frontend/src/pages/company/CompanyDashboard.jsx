@@ -39,7 +39,9 @@ export default function CompanyDashboard() {
     const [offerForm, setOfferForm] = useState({
         shuttleId: "",
         departureCityId: "",
+        departureCityName: "",
         arrivalCityId: "",
+        arrivalCityName: "",
         title: "",
         departureTime: "",
         arrivalTime: "",
@@ -56,6 +58,9 @@ export default function CompanyDashboard() {
     const [creatingOffer, setCreatingOffer] = useState(false);
     const [updatingReservationId, setUpdatingReservationId] = useState(null);
     const [updatingDemandId, setUpdatingDemandId] = useState(null);
+
+    const [showDepartureSuggestions, setShowDepartureSuggestions] = useState(false);
+    const [showArrivalSuggestions, setShowArrivalSuggestions] = useState(false);
 
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
@@ -143,6 +148,53 @@ export default function CompanyDashboard() {
         }));
     };
 
+    const getCitySuggestions = (value) => {
+        const normalizedValue = normalizeText(value);
+
+        if (!normalizedValue) {
+            return cities.slice(0, 6);
+        }
+
+        return cities
+            .filter((city) => normalizeText(city.name).includes(normalizedValue))
+            .slice(0, 6);
+    };
+
+    const handleOfferCityTyping = (field, value) => {
+        setOfferForm((previousForm) => ({
+            ...previousForm,
+            [`${field}CityName`]: value,
+            [`${field}CityId`]: "",
+        }));
+
+        setError("");
+        setSuccess("");
+
+        if (field === "departure") {
+            setShowDepartureSuggestions(true);
+        }
+
+        if (field === "arrival") {
+            setShowArrivalSuggestions(true);
+        }
+    };
+
+    const handleSelectOfferCity = (field, city) => {
+        setOfferForm((previousForm) => ({
+            ...previousForm,
+            [`${field}CityName`]: city.name,
+            [`${field}CityId`]: city.id,
+        }));
+
+        if (field === "departure") {
+            setShowDepartureSuggestions(false);
+        }
+
+        if (field === "arrival") {
+            setShowArrivalSuggestions(false);
+        }
+    };
+
     const handleCreateShuttle = async (event) => {
         event.preventDefault();
 
@@ -195,7 +247,17 @@ export default function CompanyDashboard() {
     const handleCreateOffer = async (event) => {
         event.preventDefault();
 
-        if (offerForm.departureCityId === offerForm.arrivalCityId) {
+        if (!offerForm.departureCityId) {
+            setError("Veuillez choisir une ville de départ depuis les suggestions.");
+            return;
+        }
+
+        if (!offerForm.arrivalCityId) {
+            setError("Veuillez choisir une ville d’arrivée depuis les suggestions.");
+            return;
+        }
+
+        if (Number(offerForm.departureCityId) === Number(offerForm.arrivalCityId)) {
             setError("La ville de départ et la ville d’arrivée doivent être différentes.");
             return;
         }
@@ -228,7 +290,9 @@ export default function CompanyDashboard() {
             setOfferForm({
                 shuttleId: "",
                 departureCityId: "",
+                departureCityName: "",
                 arrivalCityId: "",
+                arrivalCityName: "",
                 title: "",
                 departureTime: "",
                 arrivalTime: "",
@@ -548,38 +612,108 @@ export default function CompanyDashboard() {
 
                             <div className="col-md-6">
                                 <label className="form-label">Ville de départ</label>
-                                <select
-                                    name="departureCityId"
-                                    className="form-select"
-                                    value={offerForm.departureCityId}
-                                    onChange={handleOfferChange}
-                                    required
-                                >
-                                    <option value="">Choisir une ville</option>
-                                    {cities.map((city) => (
-                                        <option key={city.id} value={city.id}>
-                                            {city.name}
-                                        </option>
-                                    ))}
-                                </select>
+
+                                <div className="autocomplete-wrapper">
+                                    <div className="input-icon-box">
+                                        <MapPin size={18} />
+                                        <input
+                                            type="text"
+                                            className="form-control"
+                                            placeholder="Exemple : Tanger"
+                                            value={offerForm.departureCityName}
+                                            onChange={(event) => {
+                                                handleOfferCityTyping("departure", event.target.value);
+                                            }}
+                                            onFocus={() => setShowDepartureSuggestions(true)}
+                                            onBlur={() => {
+                                                setTimeout(() => setShowDepartureSuggestions(false), 150);
+                                            }}
+                                            required
+                                        />
+                                    </div>
+
+                                    {showDepartureSuggestions && (
+                                        <div className="autocomplete-menu">
+                                            {getCitySuggestions(offerForm.departureCityName).length === 0 ? (
+                                                <button
+                                                    type="button"
+                                                    className="autocomplete-item disabled"
+                                                >
+                                                    Aucune ville trouvée
+                                                </button>
+                                            ) : (
+                                                getCitySuggestions(offerForm.departureCityName).map(
+                                                    (city) => (
+                                                        <button
+                                                            type="button"
+                                                            key={city.id}
+                                                            className="autocomplete-item"
+                                                            onMouseDown={() => {
+                                                                handleSelectOfferCity("departure", city);
+                                                            }}
+                                                        >
+                                                            {city.name}
+                                                            <small>{city.country || "Ville"}</small>
+                                                        </button>
+                                                    )
+                                                )
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
                             </div>
 
                             <div className="col-md-6">
                                 <label className="form-label">Ville d’arrivée</label>
-                                <select
-                                    name="arrivalCityId"
-                                    className="form-select"
-                                    value={offerForm.arrivalCityId}
-                                    onChange={handleOfferChange}
-                                    required
-                                >
-                                    <option value="">Choisir une ville</option>
-                                    {cities.map((city) => (
-                                        <option key={city.id} value={city.id}>
-                                            {city.name}
-                                        </option>
-                                    ))}
-                                </select>
+
+                                <div className="autocomplete-wrapper">
+                                    <div className="input-icon-box">
+                                        <MapPin size={18} />
+                                        <input
+                                            type="text"
+                                            className="form-control"
+                                            placeholder="Exemple : Tétouan"
+                                            value={offerForm.arrivalCityName}
+                                            onChange={(event) => {
+                                                handleOfferCityTyping("arrival", event.target.value);
+                                            }}
+                                            onFocus={() => setShowArrivalSuggestions(true)}
+                                            onBlur={() => {
+                                                setTimeout(() => setShowArrivalSuggestions(false), 150);
+                                            }}
+                                            required
+                                        />
+                                    </div>
+
+                                    {showArrivalSuggestions && (
+                                        <div className="autocomplete-menu">
+                                            {getCitySuggestions(offerForm.arrivalCityName).length === 0 ? (
+                                                <button
+                                                    type="button"
+                                                    className="autocomplete-item disabled"
+                                                >
+                                                    Aucune ville trouvée
+                                                </button>
+                                            ) : (
+                                                getCitySuggestions(offerForm.arrivalCityName).map(
+                                                    (city) => (
+                                                        <button
+                                                            type="button"
+                                                            key={city.id}
+                                                            className="autocomplete-item"
+                                                            onMouseDown={() => {
+                                                                handleSelectOfferCity("arrival", city);
+                                                            }}
+                                                        >
+                                                            {city.name}
+                                                            <small>{city.country || "Ville"}</small>
+                                                        </button>
+                                                    )
+                                                )
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
                             </div>
 
                             <div className="col-md-3">
@@ -718,7 +852,8 @@ export default function CompanyDashboard() {
                                             <h6 className="fw-bold mb-1">{reservation.offerTitle}</h6>
 
                                             <p className="text-muted mb-2">
-                                                {reservation.departureCityName} → {reservation.arrivalCityName}
+                                                {reservation.departureCityName} →{" "}
+                                                {reservation.arrivalCityName}
                                             </p>
                                         </div>
 
@@ -811,7 +946,8 @@ export default function CompanyDashboard() {
 
                                         <span>
                                             <Users size={16} />
-                                            Places souhaitées : {demand.seats || demand.interestedCount || 1}
+                                            Places souhaitées :{" "}
+                                            {demand.seats || demand.interestedCount || 1}
                                         </span>
 
                                         <span>
@@ -1126,6 +1262,15 @@ function EmptyBox({ message }) {
             <p>{message}</p>
         </div>
     );
+}
+
+function normalizeText(value) {
+    return value
+        .toString()
+        .trim()
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "");
 }
 
 function formatDateTime(value) {

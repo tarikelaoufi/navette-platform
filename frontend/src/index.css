@@ -51,6 +51,28 @@ a {
 }
 
 /* =========================
+   Shared Glass Cards
+========================= */
+
+.hero-card,
+.auth-card,
+.feature-card,
+.offer-card,
+.empty-state,
+.offer-details-card,
+.regular-reservation-card,
+.search-card,
+.dashboard-stat-card,
+.dashboard-section,
+.mini-card,
+.empty-mini-box,
+.homepage-contact-section {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  backdrop-filter: blur(14px);
+}
+
+/* =========================
    Public Navbar
 ========================= */
 
@@ -215,11 +237,8 @@ a {
 .hero-card,
 .auth-card,
 .feature-card {
-  background: rgba(255, 255, 255, 0.88);
-  border: 1px solid rgba(226, 232, 240, 0.9);
   border-radius: 24px;
   padding: 28px;
-  backdrop-filter: blur(14px);
 }
 
 .hero-card {
@@ -251,6 +270,71 @@ a {
   border-radius: 20px;
   display: grid;
   place-items: center;
+}
+
+/* =========================
+   Homepage Contact
+========================= */
+
+.homepage-contact-section {
+  background:
+          linear-gradient(135deg, rgba(255, 255, 255, 0.94), rgba(238, 245, 255, 0.72)),
+          rgba(255, 255, 255, 0.88);
+  border-radius: 28px;
+  padding: 32px;
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.06);
+}
+
+.homepage-contact-section h2 {
+  color: #172033;
+}
+
+.contact-info-card {
+  display: grid;
+  gap: 14px;
+}
+
+.contact-info-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: rgba(248, 250, 252, 0.92);
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+  padding: 16px;
+  transition: 0.18s ease;
+}
+
+.contact-info-item:hover {
+  transform: translateY(-2px);
+  border-color: rgba(13, 110, 253, 0.22);
+  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.07);
+}
+
+.contact-info-icon {
+  width: 46px;
+  height: 46px;
+  border-radius: 16px;
+  display: grid;
+  place-items: center;
+  background: #eef5ff;
+  color: #0d6efd;
+  flex: 0 0 auto;
+}
+
+.contact-info-item small {
+  display: block;
+  color: #64748b;
+  font-size: 0.8rem;
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+
+.contact-info-item strong {
+  display: block;
+  color: #172033;
+  font-size: 0.95rem;
+  word-break: break-word;
 }
 
 /* =========================
@@ -474,11 +558,8 @@ a {
   position: relative;
   z-index: 20;
   overflow: visible;
-  background: rgba(255, 255, 255, 0.9);
-  border: 1px solid rgba(226, 232, 240, 0.9);
   border-radius: 24px;
   padding: 24px;
-  backdrop-filter: blur(14px);
 }
 
 .search-card .row {
@@ -565,11 +646,8 @@ a {
 
 .offer-card,
 .empty-state {
-  background: rgba(255, 255, 255, 0.9);
-  border: 1px solid rgba(226, 232, 240, 0.9);
   border-radius: 24px;
   padding: 24px;
-  backdrop-filter: blur(14px);
 }
 
 .offers-grid-layer {
@@ -646,11 +724,8 @@ a {
 ========================= */
 
 .offer-details-card {
-  background: rgba(255, 255, 255, 0.92);
-  border: 1px solid rgba(226, 232, 240, 0.9);
   border-radius: 28px;
   padding: 32px;
-  backdrop-filter: blur(14px);
 }
 
 .price-box {
@@ -759,11 +834,8 @@ a {
 }
 
 .regular-reservation-card {
-  background: rgba(255, 255, 255, 0.92);
-  border: 1px solid rgba(226, 232, 240, 0.9);
   border-radius: 28px;
   padding: 32px;
-  backdrop-filter: blur(14px);
   box-shadow: 0 18px 40px rgba(15, 23, 42, 0.06);
 }
 
@@ -775,10 +847,7 @@ a {
 .dashboard-section,
 .mini-card,
 .empty-mini-box {
-  background: rgba(255, 255, 255, 0.92);
-  border: 1px solid rgba(226, 232, 240, 0.9);
   border-radius: 24px;
-  backdrop-filter: blur(14px);
 }
 
 .dashboard-stat-card {
@@ -996,5 +1065,14 @@ a {
   .offer-card,
   .mini-card {
     padding: 18px;
+  }
+
+  .homepage-contact-section {
+    padding: 22px;
+    border-radius: 22px;
+  }
+
+  .contact-info-item {
+    align-items: flex-start;
   }
 }

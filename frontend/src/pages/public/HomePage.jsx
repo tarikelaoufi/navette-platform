@@ -5,6 +5,9 @@ import {
     Bus,
     CalendarDays,
     Clock,
+    Mail,
+    MapPin,
+    Phone,
     Search,
     ShieldCheck,
     Ticket,
@@ -104,7 +107,7 @@ export default function HomePage() {
             setVisibleOfferStart((previousStart) =>
                 previousStart + 1 >= offers.length ? 0 : previousStart + 1
             );
-        }, 6000);
+        }, 3000);
 
         return () => clearInterval(offersInterval);
     }, [offers.length]);
@@ -129,13 +132,17 @@ export default function HomePage() {
                 <div className="container">
                     <div className="row align-items-center min-vh-75 py-5">
                         <div className="col-lg-7">
-              <span className="badge bg-primary-subtle text-primary mb-3">
-                {currentMessage.badge}
-              </span>
+                            <span className="badge bg-primary-subtle text-primary mb-3">
+                                {currentMessage.badge}
+                            </span>
 
-                            <h1 className="display-4 fw-bold mb-4">{currentMessage.title}</h1>
+                            <h1 className="display-4 fw-bold mb-4">
+                                {currentMessage.title}
+                            </h1>
 
-                            <p className="lead text-muted mb-4">{currentMessage.description}</p>
+                            <p className="lead text-muted mb-4">
+                                {currentMessage.description}
+                            </p>
 
                             <div className="d-flex gap-3 flex-wrap">
                                 <Link
@@ -154,7 +161,10 @@ export default function HomePage() {
                                 </Link>
 
                                 {!isLoggedIn ? (
-                                    <Link to="/register" className="btn btn-light btn-lg">
+                                    <Link
+                                        to="/register"
+                                        className="btn btn-outline-primary btn-lg d-flex align-items-center gap-2"
+                                    >
                                         Créer un compte
                                     </Link>
                                 ) : (
@@ -176,11 +186,12 @@ export default function HomePage() {
                                     </div>
 
                                     <span className="badge bg-success-subtle text-success mt-4 mb-2">
-                    Navette disponible
-                  </span>
+                                        Navette disponible
+                                    </span>
 
                                     <h4 className="fw-bold mb-1">
-                                        {heroOffer.departureCityName} → {heroOffer.arrivalCityName}
+                                        {heroOffer.departureCityName} →{" "}
+                                        {heroOffer.arrivalCityName}
                                     </h4>
 
                                     <p className="text-muted mb-4">{heroOffer.title}</p>
@@ -269,9 +280,9 @@ export default function HomePage() {
                     <section className="pb-5">
                         <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-end gap-3 mb-4">
                             <div>
-                <span className="badge bg-primary-subtle text-primary mb-2">
-                  Suggestions
-                </span>
+                                <span className="badge bg-primary-subtle text-primary mb-2">
+                                    Suggestions
+                                </span>
 
                                 <h2 className="fw-bold mb-1">Navettes disponibles</h2>
 
@@ -309,8 +320,8 @@ export default function HomePage() {
                                                 </div>
 
                                                 <span className="badge bg-success-subtle text-success">
-                          {offer.status}
-                        </span>
+                                                    {offer.status}
+                                                </span>
                                             </div>
 
                                             <div className="route-box mb-3">
@@ -328,26 +339,26 @@ export default function HomePage() {
                                             </div>
 
                                             <div className="offer-info">
-                        <span>
-                          <Clock size={17} />
-                            {formatTime(offer.departureTime)} →{" "}
-                            {formatTime(offer.arrivalTime)}
-                        </span>
+                                                <span>
+                                                    <Clock size={17} />
+                                                    {formatTime(offer.departureTime)} →{" "}
+                                                    {formatTime(offer.arrivalTime)}
+                                                </span>
 
                                                 <span>
-                          <CalendarDays size={17} />
+                                                    <CalendarDays size={17} />
                                                     {offer.startDate} / {offer.endDate}
-                        </span>
+                                                </span>
 
                                                 <span>
-                          <Ticket size={17} />
-                          Billet : {formatPrice(offer.ticketPrice)} MAD
-                        </span>
+                                                    <Ticket size={17} />
+                                                    Billet : {formatPrice(offer.ticketPrice)} MAD
+                                                </span>
 
                                                 <span>
-                          <WalletCards size={17} />
-                          Abonnement : {formatPrice(offer.price)} MAD
-                        </span>
+                                                    <WalletCards size={17} />
+                                                    Abonnement : {formatPrice(offer.price)} MAD
+                                                </span>
                                             </div>
 
                                             <div className="d-flex justify-content-between align-items-center gap-3 mt-4">
@@ -355,7 +366,10 @@ export default function HomePage() {
                                                     {offer.availablePlaces} places disponibles
                                                 </small>
 
-                                                <Link to={`/offers/${offer.id}`} className="btn btn-primary">
+                                                <Link
+                                                    to={`/offers/${offer.id}`}
+                                                    className="btn btn-primary"
+                                                >
                                                     Détails
                                                 </Link>
                                             </div>
@@ -364,6 +378,84 @@ export default function HomePage() {
                                 ))}
                             </div>
                         )}
+                    </section>
+
+                    <section className="homepage-contact-section mb-5">
+                        <div className="row align-items-center g-4">
+                            <div className="col-lg-7">
+                                <span className="badge bg-primary-subtle text-primary mb-3">
+                                    Contact
+                                </span>
+
+                                <h2 className="fw-bold mb-3">
+                                    Besoin d’aide ou d’informations ?
+                                </h2>
+
+                                <p className="text-muted mb-4">
+                                    Notre équipe est disponible pour accompagner les utilisateurs,
+                                    les sociétés de transport et les administrateurs dans
+                                    l’utilisation de la plateforme Navette.
+                                </p>
+
+                                <div className="d-flex flex-wrap gap-3">
+                                    <a
+                                        href="mailto:contact@navette-platform.ma"
+                                        className="btn btn-primary d-flex align-items-center gap-2"
+                                    >
+                                        <Mail size={18} />
+                                        Nous contacter
+                                    </a>
+
+                                    <Link
+                                        to="/register"
+                                        className="btn btn-outline-primary d-flex align-items-center gap-2"
+                                    >
+                                        Devenir partenaire
+                                        <ArrowRight size={18} />
+                                    </Link>
+                                </div>
+                            </div>
+
+                            <div className="col-lg-5">
+                                <div className="contact-info-card">
+                                    <div className="contact-info-item">
+                                        <div className="contact-info-icon">
+                                            <Mail size={20} />
+                                        </div>
+
+                                        <div>
+                                            <small>Email</small>
+                                            <strong>contact@navette-platform.ma</strong>
+                                        </div>
+                                    </div>
+
+                                    <div className="contact-info-item">
+                                        <div className="contact-info-icon">
+                                            <Phone size={20} />
+                                        </div>
+
+                                        <div>
+                                            <small>Téléphone</small>
+                                            <strong>+212 5 39 00 00 00</strong>
+                                        </div>
+                                    </div>
+
+                                    <div className="contact-info-item">
+                                        <div className="contact-info-icon">
+                                            <MapPin size={20} />
+                                        </div>
+
+                                        <div>
+                                            <small>Adresse</small>
+                                            <strong>
+                                                Gare routière de Kénitra <br />
+                                                Quartier El Mellah, Kénitra, Maroc
+                                            </strong>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </section>
                 </div>
             </section>
