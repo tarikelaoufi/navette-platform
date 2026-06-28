@@ -32,49 +32,111 @@ public class SecurityConfig {
 
     @Bean
     public AuthenticationProvider authenticationProvider() {
-        DaoAuthenticationProvider authenticationProvider = new DaoAuthenticationProvider();
+        DaoAuthenticationProvider authenticationProvider =
+                new DaoAuthenticationProvider();
 
-        authenticationProvider.setUserDetailsService(customUserDetailsService);
-        authenticationProvider.setPasswordEncoder(passwordEncoder());
+        authenticationProvider.setUserDetailsService(
+                customUserDetailsService
+        );
+
+        authenticationProvider.setPasswordEncoder(
+                passwordEncoder()
+        );
 
         return authenticationProvider;
     }
 
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
-        return config.getAuthenticationManager();
+    public AuthenticationManager authenticationManager(
+            AuthenticationConfiguration authenticationConfiguration
+    ) throws Exception {
+        return authenticationConfiguration.getAuthenticationManager();
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(
+            HttpSecurity http
+    ) throws Exception {
+
         http
-                .cors(cors -> {})
+                .cors(cors -> {
+                })
+
                 .csrf(csrf -> csrf.disable())
 
-                .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                .sessionManagement(session ->
+                        session.sessionCreationPolicy(
+                                SessionCreationPolicy.STATELESS
+                        )
                 )
 
                 .authenticationProvider(authenticationProvider())
 
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers("/api/test").permitAll()
 
-                        .requestMatchers("/api/cities/**").permitAll()
-                        .requestMatchers("/api/offers/**").permitAll()
+                        /*
+                         * Routes publiques d’authentification
+                         */
+                        .requestMatchers(
+                                "/api/auth/login",
+                                "/api/auth/register",
+                                "/api/auth/register-company"
+                        )
+                        .permitAll()
 
-                        .requestMatchers("/api/user/**").hasAuthority("ROLE_USER")
-                        .requestMatchers("/api/company/**").hasAuthority("ROLE_COMPANY")
-                        .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")
+                        /*
+                         * Autres routes publiques d’authentification,
+                         * par exemple vérification ou rafraîchissement.
+                         */
+                        .requestMatchers("/api/auth/**")
+                        .permitAll()
 
-                        .anyRequest().authenticated()
+                        /*
+                         * Routes publiques générales
+                         */
+                        .requestMatchers("/api/test")
+                        .permitAll()
+
+                        .requestMatchers("/api/cities/**")
+                        .permitAll()
+
+                        .requestMatchers("/api/offers/**")
+                        .permitAll()
+
+                        /*
+                         * Routes réservées aux utilisateurs
+                         */
+                        .requestMatchers("/api/user/**")
+                        .hasAuthority("ROLE_USER")
+
+                        /*
+                         * Routes réservées aux sociétés
+                         */
+                        .requestMatchers("/api/company/**")
+                        .hasAuthority("ROLE_COMPANY")
+
+                        /*
+                         * Routes réservées à l’administrateur
+                         */
+                        .requestMatchers("/api/admin/**")
+                        .hasAuthority("ROLE_ADMIN")
+
+                        /*
+                         * Toutes les autres routes nécessitent
+                         * une authentification valide.
+                         */
+                        .anyRequest()
+                        .authenticated()
                 )
 
                 .formLogin(form -> form.disable())
+
                 .httpBasic(basic -> basic.disable())
 
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(
+                        jwtAuthenticationFilter,
+                        UsernamePasswordAuthenticationFilter.class
+                );
 
         return http.build();
     }

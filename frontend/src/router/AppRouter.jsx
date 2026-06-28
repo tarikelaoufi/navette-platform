@@ -12,6 +12,7 @@ import SimpleReservationPage from "../pages/public/SimpleReservationPage";
 
 import LoginPage from "../pages/auth/LoginPage";
 import RegisterPage from "../pages/auth/RegisterPage";
+import CompanyRegisterPage from "../pages/auth/CompanyRegisterPage";
 
 import UserDashboard from "../pages/user/UserDashboard";
 import CompanyDashboard from "../pages/company/CompanyDashboard";
@@ -28,6 +29,7 @@ export default function AppRouter() {
                 <Route path="/regular-reservation" element={<RegularReservationPage />} />
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/register" element={<RegisterPage />} />
+                <Route path="/company/register" element={<CompanyRegisterPage />} />
             </Route>
 
             <Route

@@ -17,12 +17,17 @@ public class TransportCompanyResponse {
     private Long id;
 
     private Long userId;
+
     private String userEmail;
+
     private String userFullName;
 
     private String companyName;
+
     private String professionalEmail;
+
     private String phone;
+
     private String address;
 
     private CompanyStatus status;

@@ -16,27 +16,50 @@ public class TransportCompanyService {
 
     @Transactional(readOnly = true)
     public TransportCompanyResponse getCompanyByUserId(Long userId) {
-        TransportCompany company = transportCompanyRepository.findByUserId(userId)
-                .orElseThrow(() -> new RuntimeException("Transport company not found for this user"));
+        if (userId == null) {
+            throw new IllegalArgumentException("User ID is required");
+        }
+
+        TransportCompany company = transportCompanyRepository
+                .findByUserId(userId)
+                .orElseThrow(() -> new RuntimeException(
+                        "Transport company not found for user ID: " + userId
+                ));
 
         return mapToResponse(company);
     }
 
     @Transactional(readOnly = true)
     public TransportCompanyResponse getCompanyById(Long companyId) {
-        TransportCompany company = transportCompanyRepository.findById(companyId)
-                .orElseThrow(() -> new RuntimeException("Transport company not found"));
+        if (companyId == null) {
+            throw new IllegalArgumentException("Company ID is required");
+        }
+
+        TransportCompany company = transportCompanyRepository
+                .findById(companyId)
+                .orElseThrow(() -> new RuntimeException(
+                        "Transport company not found with ID: " + companyId
+                ));
 
         return mapToResponse(company);
     }
 
-    private TransportCompanyResponse mapToResponse(TransportCompany company) {
+    private TransportCompanyResponse mapToResponse(
+            TransportCompany company
+    ) {
         User user = company.getUser();
 
         String userFullName = "-";
+
         if (user != null) {
-            String firstName = user.getFirstName() != null ? user.getFirstName() : "";
-            String lastName = user.getLastName() != null ? user.getLastName() : "";
+            String firstName = user.getFirstName() != null
+                    ? user.getFirstName().trim()
+                    : "";
+
+            String lastName = user.getLastName() != null
+                    ? user.getLastName().trim()
+                    : "";
+
             userFullName = (firstName + " " + lastName).trim();
 
             if (userFullName.isBlank()) {
