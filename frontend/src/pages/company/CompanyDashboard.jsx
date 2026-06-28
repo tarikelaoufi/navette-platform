@@ -58,6 +58,7 @@ export default function CompanyDashboard() {
     const [creatingOffer, setCreatingOffer] = useState(false);
     const [updatingReservationId, setUpdatingReservationId] = useState(null);
     const [updatingDemandId, setUpdatingDemandId] = useState(null);
+    const [cancellingOfferId, setCancellingOfferId] = useState(null);
 
     const [showDepartureSuggestions, setShowDepartureSuggestions] = useState(false);
     const [showArrivalSuggestions, setShowArrivalSuggestions] = useState(false);
@@ -121,6 +122,7 @@ export default function CompanyDashboard() {
 
         return () => clearTimeout(timer);
     }, []);
+
 
     const getCompanyId = () => {
         if (!company?.id) {
@@ -371,6 +373,41 @@ export default function CompanyDashboard() {
             );
         } finally {
             setUpdatingDemandId(null);
+        }
+    };
+
+    const handleCancelOffer = async (offerId) => {
+        setCancellingOfferId(offerId);
+        setError("");
+        setSuccess("");
+
+        try {
+            const companyId = getCompanyId();
+
+            const response = await api.put(
+                `/api/company/offers/${offerId}/cancel`,
+                null,
+                {
+                    params: { companyId },
+                }
+            );
+
+            setOffers((previousOffers) =>
+                previousOffers.map((offer) =>
+                    offer.id === offerId ? response.data : offer
+                )
+            );
+
+            setSuccess("Offre annulée avec succès.");
+        } catch (error) {
+            console.error("CANCEL OFFER ERROR:", error);
+            setError(
+                error.response?.data?.message ||
+                error.response?.data?.error ||
+                "Impossible d’annuler cette offre."
+            );
+        } finally {
+            setCancellingOfferId(null);
         }
     };
 
@@ -1064,7 +1101,11 @@ export default function CompanyDashboard() {
                                             </p>
                                         </div>
 
-                                        <span className="badge bg-success-subtle text-success align-self-start">
+                                        <span
+                                            className={`badge align-self-start ${getOfferBadgeClass(
+                                                offer.status
+                                            )}`}
+                                        >
                                             {offer.status}
                                         </span>
                                     </div>
@@ -1100,12 +1141,32 @@ export default function CompanyDashboard() {
                                             Navette : {offer.shuttleName}
                                         </span>
                                     </div>
+
+                                    {offer.status === "OUVERTE" ? (
+                                        <div className="d-flex justify-content-end mt-3">
+                                            <button
+                                                type="button"
+                                                className="btn btn-outline-danger btn-sm px-3"
+                                                disabled={cancellingOfferId === offer.id}
+                                                onClick={() => handleCancelOffer(offer.id)}
+                                            >
+                                                {cancellingOfferId === offer.id
+                                                    ? "Annulation..."
+                                                    : "Annuler l’offre"}
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <p className="text-muted small mb-0 mt-3">
+                                            Aucune action disponible
+                                        </p>
+                                    )}
                                 </div>
                             </div>
                         ))}
                     </div>
                 )}
             </section>
+
         </div>
     );
 }
@@ -1301,4 +1362,12 @@ function getDemandBadgeClass(status) {
     if (status === "REJECTED") return "bg-danger-subtle text-danger";
     if (status === "CANCELLED") return "bg-secondary-subtle text-secondary";
     return "bg-primary-subtle text-primary";
+}
+
+function getOfferBadgeClass(status) {
+    if (status === "OUVERTE") return "bg-success-subtle text-success";
+    if (status === "ANNULEE") return "bg-danger-subtle text-danger";
+    if (status === "COMPLETE") return "bg-primary-subtle text-primary";
+    if (status === "EXPIREE") return "bg-secondary-subtle text-secondary";
+    return "bg-warning-subtle text-warning";
 }

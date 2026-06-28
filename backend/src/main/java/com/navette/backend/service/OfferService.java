@@ -13,6 +13,7 @@ import com.navette.backend.repository.ShuttleRepository;
 import com.navette.backend.repository.TransportCompanyRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -25,29 +26,49 @@ public class OfferService {
     private final ShuttleRepository shuttleRepository;
     private final CityRepository cityRepository;
 
+    @Transactional
     public OfferResponse createOffer(OfferRequest request) {
-        TransportCompany company = transportCompanyRepository.findById(request.getCompanyId())
-                .orElseThrow(() -> new RuntimeException("Transport company not found"));
+        TransportCompany company = transportCompanyRepository
+                .findById(request.getCompanyId())
+                .orElseThrow(() ->
+                        new RuntimeException("Transport company not found")
+                );
 
-        Shuttle shuttle = shuttleRepository.findById(request.getShuttleId())
-                .orElseThrow(() -> new RuntimeException("Shuttle not found"));
+        Shuttle shuttle = shuttleRepository
+                .findById(request.getShuttleId())
+                .orElseThrow(() ->
+                        new RuntimeException("Shuttle not found")
+                );
 
-        City departureCity = cityRepository.findById(request.getDepartureCityId())
-                .orElseThrow(() -> new RuntimeException("Departure city not found"));
+        City departureCity = cityRepository
+                .findById(request.getDepartureCityId())
+                .orElseThrow(() ->
+                        new RuntimeException("Departure city not found")
+                );
 
-        City arrivalCity = cityRepository.findById(request.getArrivalCityId())
-                .orElseThrow(() -> new RuntimeException("Arrival city not found"));
+        City arrivalCity = cityRepository
+                .findById(request.getArrivalCityId())
+                .orElseThrow(() ->
+                        new RuntimeException("Arrival city not found")
+                );
 
         if (!shuttle.getCompany().getId().equals(company.getId())) {
-            throw new RuntimeException("This shuttle does not belong to this company");
+            throw new RuntimeException(
+                    "This shuttle does not belong to this company"
+            );
         }
 
-        if (request.getDepartureCityId().equals(request.getArrivalCityId())) {
-            throw new RuntimeException("Departure city and arrival city must be different");
+        if (request.getDepartureCityId()
+                .equals(request.getArrivalCityId())) {
+            throw new RuntimeException(
+                    "Departure city and arrival city must be different"
+            );
         }
 
         if (request.getEndDate().isBefore(request.getStartDate())) {
-            throw new RuntimeException("End date must be after start date");
+            throw new RuntimeException(
+                    "End date must be after start date"
+            );
         }
 
         Offer offer = Offer.builder()
@@ -73,28 +94,40 @@ public class OfferService {
         return mapToResponse(savedOffer);
     }
 
+    @Transactional(readOnly = true)
     public List<OfferResponse> getAllOpenOffers() {
-        return offerRepository.findByStatus(OfferStatus.OUVERTE)
+        return offerRepository
+                .findByStatus(OfferStatus.OUVERTE)
                 .stream()
                 .map(this::mapToResponse)
                 .toList();
     }
 
+    @Transactional(readOnly = true)
     public List<OfferResponse> getCompanyOffers(Long companyId) {
-        return offerRepository.findByCompanyId(companyId)
+        return offerRepository
+                .findByCompanyId(companyId)
                 .stream()
                 .map(this::mapToResponse)
                 .toList();
     }
 
+    @Transactional(readOnly = true)
     public OfferResponse getOfferById(Long id) {
-        Offer offer = offerRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Offer not found"));
+        Offer offer = offerRepository
+                .findById(id)
+                .orElseThrow(() ->
+                        new RuntimeException("Offer not found")
+                );
 
         return mapToResponse(offer);
     }
 
-    public List<OfferResponse> searchOffers(Long departureCityId, Long arrivalCityId) {
+    @Transactional(readOnly = true)
+    public List<OfferResponse> searchOffers(
+            Long departureCityId,
+            Long arrivalCityId
+    ) {
         return offerRepository
                 .findByDepartureCityIdAndArrivalCityIdAndStatus(
                         departureCityId,
@@ -106,32 +139,76 @@ public class OfferService {
                 .toList();
     }
 
-    public OfferResponse updateOffer(Long id, OfferRequest request) {
-        Offer offer = offerRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Offer not found"));
+    @Transactional
+    public OfferResponse updateOffer(
+            Long id,
+            OfferRequest request
+    ) {
+        Offer offer = offerRepository
+                .findById(id)
+                .orElseThrow(() ->
+                        new RuntimeException("Offer not found")
+                );
 
-        TransportCompany company = transportCompanyRepository.findById(request.getCompanyId())
-                .orElseThrow(() -> new RuntimeException("Transport company not found"));
-
-        Shuttle shuttle = shuttleRepository.findById(request.getShuttleId())
-                .orElseThrow(() -> new RuntimeException("Shuttle not found"));
-
-        City departureCity = cityRepository.findById(request.getDepartureCityId())
-                .orElseThrow(() -> new RuntimeException("Departure city not found"));
-
-        City arrivalCity = cityRepository.findById(request.getArrivalCityId())
-                .orElseThrow(() -> new RuntimeException("Arrival city not found"));
-
-        if (!shuttle.getCompany().getId().equals(company.getId())) {
-            throw new RuntimeException("This shuttle does not belong to this company");
+        if (offer.getStatus() == OfferStatus.ANNULEE) {
+            throw new RuntimeException(
+                    "A cancelled offer cannot be modified"
+            );
         }
 
-        if (request.getDepartureCityId().equals(request.getArrivalCityId())) {
-            throw new RuntimeException("Departure city and arrival city must be different");
+        if (offer.getStatus() == OfferStatus.EXPIREE) {
+            throw new RuntimeException(
+                    "An expired offer cannot be modified"
+            );
+        }
+
+        TransportCompany company = transportCompanyRepository
+                .findById(request.getCompanyId())
+                .orElseThrow(() ->
+                        new RuntimeException("Transport company not found")
+                );
+
+        if (!offer.getCompany().getId().equals(company.getId())) {
+            throw new RuntimeException(
+                    "This offer does not belong to this company"
+            );
+        }
+
+        Shuttle shuttle = shuttleRepository
+                .findById(request.getShuttleId())
+                .orElseThrow(() ->
+                        new RuntimeException("Shuttle not found")
+                );
+
+        City departureCity = cityRepository
+                .findById(request.getDepartureCityId())
+                .orElseThrow(() ->
+                        new RuntimeException("Departure city not found")
+                );
+
+        City arrivalCity = cityRepository
+                .findById(request.getArrivalCityId())
+                .orElseThrow(() ->
+                        new RuntimeException("Arrival city not found")
+                );
+
+        if (!shuttle.getCompany().getId().equals(company.getId())) {
+            throw new RuntimeException(
+                    "This shuttle does not belong to this company"
+            );
+        }
+
+        if (request.getDepartureCityId()
+                .equals(request.getArrivalCityId())) {
+            throw new RuntimeException(
+                    "Departure city and arrival city must be different"
+            );
         }
 
         if (request.getEndDate().isBefore(request.getStartDate())) {
-            throw new RuntimeException("End date must be after start date");
+            throw new RuntimeException(
+                    "End date must be after start date"
+            );
         }
 
         offer.setCompany(company);
@@ -148,7 +225,10 @@ public class OfferService {
         offer.setTotalPlaces(request.getTotalPlaces());
         offer.setDescription(request.getDescription());
 
-        if (offer.getAvailablePlaces() == null || offer.getAvailablePlaces() > request.getTotalPlaces()) {
+        if (
+                offer.getAvailablePlaces() == null ||
+                        offer.getAvailablePlaces() > request.getTotalPlaces()
+        ) {
             offer.setAvailablePlaces(request.getTotalPlaces());
         }
 
@@ -157,44 +237,66 @@ public class OfferService {
         return mapToResponse(updatedOffer);
     }
 
-    public void deleteOffer(Long id) {
-        if (!offerRepository.existsById(id)) {
-            throw new RuntimeException("Offer not found");
+    @Transactional
+    public OfferResponse cancelOffer(
+            Long offerId,
+            Long companyId
+    ) {
+        if (companyId == null) {
+            throw new RuntimeException("Company ID is required");
         }
 
-        offerRepository.deleteById(id);
+        Offer offer = offerRepository
+                .findById(offerId)
+                .orElseThrow(() ->
+                        new RuntimeException("Offer not found")
+                );
+
+        if (!offer.getCompany().getId().equals(companyId)) {
+            throw new RuntimeException(
+                    "You cannot cancel an offer belonging to another company"
+            );
+        }
+
+        if (offer.getStatus() == OfferStatus.ANNULEE) {
+            throw new RuntimeException(
+                    "This offer is already cancelled"
+            );
+        }
+
+        if (offer.getStatus() != OfferStatus.OUVERTE) {
+            throw new RuntimeException(
+                    "Only an open offer can be cancelled"
+            );
+        }
+
+        offer.setStatus(OfferStatus.ANNULEE);
+
+        Offer cancelledOffer = offerRepository.save(offer);
+
+        return mapToResponse(cancelledOffer);
     }
 
     private OfferResponse mapToResponse(Offer offer) {
         return OfferResponse.builder()
                 .id(offer.getId())
-
                 .companyId(offer.getCompany().getId())
                 .companyName(offer.getCompany().getCompanyName())
-
                 .shuttleId(offer.getShuttle().getId())
                 .shuttleName(offer.getShuttle().getName())
-
                 .departureCityId(offer.getDepartureCity().getId())
                 .departureCityName(offer.getDepartureCity().getName())
-
                 .arrivalCityId(offer.getArrivalCity().getId())
                 .arrivalCityName(offer.getArrivalCity().getName())
-
                 .title(offer.getTitle())
-
                 .departureTime(offer.getDepartureTime())
                 .arrivalTime(offer.getArrivalTime())
-
                 .startDate(offer.getStartDate())
                 .endDate(offer.getEndDate())
-
                 .price(offer.getPrice())
                 .ticketPrice(offer.getTicketPrice())
-
                 .totalPlaces(offer.getTotalPlaces())
                 .availablePlaces(offer.getAvailablePlaces())
-
                 .status(offer.getStatus())
                 .description(offer.getDescription())
                 .build();

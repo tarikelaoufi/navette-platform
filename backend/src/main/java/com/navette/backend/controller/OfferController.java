@@ -16,12 +16,16 @@ public class OfferController {
     private final OfferService offerService;
 
     @PostMapping("/api/company/offers")
-    public OfferResponse createOffer(@Valid @RequestBody OfferRequest request) {
+    public OfferResponse createOffer(
+            @Valid @RequestBody OfferRequest request
+    ) {
         return offerService.createOffer(request);
     }
 
     @GetMapping("/api/company/offers")
-    public List<OfferResponse> getCompanyOffers(@RequestParam Long companyId) {
+    public List<OfferResponse> getCompanyOffers(
+            @RequestParam Long companyId
+    ) {
         return offerService.getCompanyOffers(companyId);
     }
 
@@ -35,11 +39,16 @@ public class OfferController {
             @RequestParam Long departureCityId,
             @RequestParam Long arrivalCityId
     ) {
-        return offerService.searchOffers(departureCityId, arrivalCityId);
+        return offerService.searchOffers(
+                departureCityId,
+                arrivalCityId
+        );
     }
 
     @GetMapping("/api/offers/{id}")
-    public OfferResponse getOfferById(@PathVariable Long id) {
+    public OfferResponse getOfferById(
+            @PathVariable Long id
+    ) {
         return offerService.getOfferById(id);
     }
 
@@ -51,9 +60,11 @@ public class OfferController {
         return offerService.updateOffer(id, request);
     }
 
-    @DeleteMapping("/api/company/offers/{id}")
-    public String deleteOffer(@PathVariable Long id) {
-        offerService.deleteOffer(id);
-        return "Offer deleted successfully";
+    @PutMapping("/api/company/offers/{id}/cancel")
+    public OfferResponse cancelOffer(
+            @PathVariable Long id,
+            @RequestParam Long companyId
+    ) {
+        return offerService.cancelOffer(id, companyId);
     }
 }
