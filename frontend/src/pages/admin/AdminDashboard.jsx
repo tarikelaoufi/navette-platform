@@ -12,7 +12,9 @@ import {
     Phone,
     RefreshCw,
     Route,
+    ShieldCheck,
     Ticket,
+    UserCheck,
     UserRound,
     Users,
     WalletCards,
@@ -32,6 +34,7 @@ export default function AdminDashboard() {
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [companyActionId, setCompanyActionId] = useState(null);
+    const [userActionId, setUserActionId] = useState(null);
 
     const [error, setError] = useState("");
     const [successMessage, setSuccessMessage] = useState("");
@@ -58,7 +61,6 @@ export default function AdminDashboard() {
         }
 
         setError("");
-        setSuccessMessage("");
 
         try {
             const [
@@ -115,8 +117,10 @@ export default function AdminDashboard() {
             );
 
             setError(
-                requestError.response?.data?.message ||
-                "Impossible de charger les données administrateur."
+                getApiErrorMessage(
+                    requestError,
+                    "Impossible de charger les données administrateur."
+                )
             );
         } finally {
             setLoading(false);
@@ -133,14 +137,6 @@ export default function AdminDashboard() {
     }, []);
 
     async function handleValidateCompany(companyId) {
-        const confirmed = window.confirm(
-            "Voulez-vous valider cette société de transport ?"
-        );
-
-        if (!confirmed) {
-            return;
-        }
-
         await performCompanyAction({
             companyId,
             endpoint: `/api/admin/companies/${companyId}/validate`,
@@ -150,14 +146,6 @@ export default function AdminDashboard() {
     }
 
     async function handleRejectCompany(companyId) {
-        const confirmed = window.confirm(
-            "Voulez-vous refuser cette demande de partenariat ?"
-        );
-
-        if (!confirmed) {
-            return;
-        }
-
         await performCompanyAction({
             companyId,
             endpoint: `/api/admin/companies/${companyId}/reject`,
@@ -167,19 +155,20 @@ export default function AdminDashboard() {
     }
 
     async function handleBlockCompany(companyId) {
-        const confirmed = window.confirm(
-            "Voulez-vous bloquer cette société ?"
-        );
-
-        if (!confirmed) {
-            return;
-        }
-
         await performCompanyAction({
             companyId,
             endpoint: `/api/admin/companies/${companyId}/block`,
             successText:
-                "La société a été bloquée.",
+                "La société et son compte utilisateur ont été bloqués.",
+        });
+    }
+
+    async function handleReactivateCompany(companyId) {
+        await performCompanyAction({
+            companyId,
+            endpoint: `/api/admin/companies/${companyId}/validate`,
+            successText:
+                "La société et son compte utilisateur ont été réactivés.",
         });
     }
 
@@ -188,30 +177,20 @@ export default function AdminDashboard() {
                                             endpoint,
                                             successText,
                                         }) {
+        if (companyActionId !== null) {
+            return;
+        }
+
         setCompanyActionId(companyId);
         setError("");
         setSuccessMessage("");
 
         try {
-            const response = await api.put(endpoint);
+            await api.put(endpoint);
 
-            const updatedCompany =
-                response.data?.company || response.data;
+            setSuccessMessage(successText);
 
-            setCompanies((previousCompanies) =>
-                previousCompanies.map((company) =>
-                    company.id === companyId
-                        ? {
-                            ...company,
-                            ...updatedCompany,
-                        }
-                        : company
-                )
-            );
-
-            setSuccessMessage(
-                response.data?.message || successText
-            );
+            await loadAdminData();
         } catch (requestError) {
             console.error(
                 "COMPANY STATUS ERROR:",
@@ -219,11 +198,57 @@ export default function AdminDashboard() {
             );
 
             setError(
-                requestError.response?.data?.message ||
-                "Impossible de modifier le statut de cette société."
+                getApiErrorMessage(
+                    requestError,
+                    "Impossible de modifier le statut de cette société."
+                )
             );
         } finally {
             setCompanyActionId(null);
+        }
+    }
+
+    async function handleUpdateUserStatus(
+        userId,
+        status
+    ) {
+        if (userActionId !== null) {
+            return;
+        }
+
+        setUserActionId(userId);
+        setError("");
+        setSuccessMessage("");
+
+        try {
+            await api.put(
+                `/api/admin/users/${userId}/status`,
+                {
+                    status,
+                }
+            );
+
+            setSuccessMessage(
+                status === "BLOQUE"
+                    ? "L’utilisateur a été bloqué avec succès."
+                    : "L’utilisateur a été réactivé avec succès."
+            );
+
+            await loadAdminData();
+        } catch (requestError) {
+            console.error(
+                "USER STATUS ERROR:",
+                requestError
+            );
+
+            setError(
+                getApiErrorMessage(
+                    requestError,
+                    "Impossible de modifier le statut de cet utilisateur."
+                )
+            );
+        } finally {
+            setUserActionId(null);
         }
     }
 
@@ -465,9 +490,7 @@ export default function AdminDashboard() {
                                                 {actionLoading ? (
                                                     <span className="spinner-border spinner-border-sm" />
                                                 ) : (
-                                                    <CheckCircle2
-                                                        size={17}
-                                                    />
+                                                    <CheckCircle2 size={17} />
                                                 )}
 
                                                 Valider
@@ -486,6 +509,7 @@ export default function AdminDashboard() {
                                                 <XCircle size={17} />
                                                 Refuser
                                             </button>
+
                                         </div>
                                     </div>
                                 </div>
@@ -497,7 +521,16 @@ export default function AdminDashboard() {
 
             <section className="dashboard-section mb-4">
                 <div className="section-header">
-                    <h4>Utilisateurs</h4>
+                    <div>
+                        <h4 className="mb-1">
+                            Utilisateurs
+                        </h4>
+
+                        <p className="text-muted mb-0">
+                            Bloquez ou réactivez les comptes utilisateurs.
+                        </p>
+                    </div>
+
                     <span>{users.length}</span>
                 </div>
 
@@ -511,34 +544,133 @@ export default function AdminDashboard() {
                                 <th>ID</th>
                                 <th>Nom</th>
                                 <th>Email</th>
+                                <th>Rôle</th>
                                 <th>Téléphone</th>
-                                <th>Statut</th>
+                                <th>Statut compte</th>
+                                <th>Statut société</th>
+                                <th>Actions</th>
                             </tr>
                             </thead>
 
                             <tbody>
-                            {users.map((user) => (
-                                <tr key={user.id}>
-                                    <td>#{user.id}</td>
+                            {users.map((user) => {
+                                const actionLoading =
+                                    userActionId === user.id;
 
-                                    <td>
-                                        {user.firstName}{" "}
-                                        {user.lastName}
-                                    </td>
+                                const isAdmin =
+                                    user.role === "ROLE_ADMIN";
 
-                                    <td>{user.email}</td>
+                                return (
+                                    <tr key={user.id}>
+                                        <td>#{user.id}</td>
 
-                                    <td>
-                                        {user.phone || "-"}
-                                    </td>
+                                        <td>
+                                            {user.firstName}{" "}
+                                            {user.lastName}
+                                        </td>
 
-                                    <td>
-                                            <span className="badge bg-primary-subtle text-primary">
-                                                {user.status}
-                                            </span>
-                                    </td>
-                                </tr>
-                            ))}
+                                        <td>{user.email}</td>
+
+                                        <td>
+                                                <span className="badge bg-light text-dark border">
+                                                    {getRoleLabel(
+                                                        user.role
+                                                    )}
+                                                </span>
+                                        </td>
+
+                                        <td>
+                                            {user.phone || "-"}
+                                        </td>
+
+                                        <td>
+                                                <span
+                                                    className={`badge ${getUserBadgeClass(
+                                                        user.status
+                                                    )}`}
+                                                >
+                                                    {user.status}
+                                                </span>
+                                        </td>
+
+                                        <td>
+                                            {user.companyStatus ? (
+                                                <span
+                                                    className={`badge ${getCompanyBadgeClass(
+                                                        user.companyStatus
+                                                    )}`}
+                                                >
+                                                        {
+                                                            user.companyStatus
+                                                        }
+                                                    </span>
+                                            ) : (
+                                                <span className="text-muted">
+                                                        —
+                                                    </span>
+                                            )}
+                                        </td>
+
+                                        <td>
+                                            {isAdmin ? (
+                                                <span className="text-muted small d-inline-flex align-items-center gap-1">
+                                                        <ShieldCheck
+                                                            size={15}
+                                                        />
+                                                        Protégé
+                                                    </span>
+                                            ) : user.status ===
+                                            "BLOQUE" ? (
+                                                <button
+                                                    type="button"
+                                                    className="btn btn-outline-success btn-sm d-inline-flex align-items-center gap-2"
+                                                    disabled={
+                                                        actionLoading
+                                                    }
+                                                    onClick={() =>
+                                                        handleUpdateUserStatus(
+                                                            user.id,
+                                                            "ACTIF"
+                                                        )
+                                                    }
+                                                >
+                                                    {actionLoading ? (
+                                                        <span className="spinner-border spinner-border-sm" />
+                                                    ) : (
+                                                        <UserCheck
+                                                            size={16}
+                                                        />
+                                                    )}
+                                                    Réactiver
+                                                </button>
+                                            ) : (
+                                                <button
+                                                    type="button"
+                                                    className="btn btn-outline-danger btn-sm d-inline-flex align-items-center gap-2"
+                                                    disabled={
+                                                        actionLoading
+                                                    }
+                                                    onClick={() =>
+                                                        handleUpdateUserStatus(
+                                                            user.id,
+                                                            "BLOQUE"
+                                                        )
+                                                    }
+                                                >
+                                                    {actionLoading ? (
+                                                        <span className="spinner-border spinner-border-sm" />
+                                                    ) : (
+                                                        <Ban
+                                                            size={16}
+                                                        />
+                                                    )}
+                                                    Bloquer
+                                                </button>
+                                            )}
+                                        </td>
+                                    </tr>
+                                );
+                            })}
                             </tbody>
                         </table>
                     </div>
@@ -613,9 +745,9 @@ export default function AdminDashboard() {
                                             </span>
                                         </div>
 
-                                        {company.status ===
-                                            "VALIDEE" && (
-                                                <div className="mt-3 pt-3 border-top">
+                                        <div className="d-flex flex-wrap gap-2 mt-3 pt-3 border-top">
+                                            {company.status ===
+                                                "VALIDEE" && (
                                                     <button
                                                         type="button"
                                                         className="btn btn-outline-danger btn-sm d-flex align-items-center gap-2"
@@ -636,8 +768,36 @@ export default function AdminDashboard() {
 
                                                         Bloquer
                                                     </button>
-                                                </div>
+                                                )}
+
+                                            {(company.status ===
+                                                "BLOQUEE" ||
+                                                company.status ===
+                                                "REFUSEE") && (
+                                                <button
+                                                    type="button"
+                                                    className="btn btn-outline-success btn-sm d-flex align-items-center gap-2"
+                                                    disabled={
+                                                        actionLoading
+                                                    }
+                                                    onClick={() =>
+                                                        handleReactivateCompany(
+                                                            company.id
+                                                        )
+                                                    }
+                                                >
+                                                    {actionLoading ? (
+                                                        <span className="spinner-border spinner-border-sm" />
+                                                    ) : (
+                                                        <UserCheck
+                                                            size={16}
+                                                        />
+                                                    )}
+
+                                                    Réactiver
+                                                </button>
                                             )}
+                                        </div>
                                     </div>
                                 </div>
                             );
@@ -1103,6 +1263,22 @@ function getCompanyManagerName(company) {
     return "-";
 }
 
+function getRoleLabel(role) {
+    if (role === "ROLE_ADMIN") {
+        return "Administrateur";
+    }
+
+    if (role === "ROLE_COMPANY") {
+        return "Société";
+    }
+
+    if (role === "ROLE_USER") {
+        return "Utilisateur";
+    }
+
+    return role || "-";
+}
+
 function formatDateTime(value) {
     if (!value) {
         return "-";
@@ -1124,6 +1300,41 @@ function formatPrice(value) {
     }
 
     return Number(value).toFixed(2);
+}
+
+function getApiErrorMessage(
+    requestError,
+    fallbackMessage
+) {
+    const responseData =
+        requestError?.response?.data;
+
+    if (typeof responseData === "string") {
+        return responseData;
+    }
+
+    return (
+        responseData?.message ||
+        responseData?.error ||
+        requestError?.message ||
+        fallbackMessage
+    );
+}
+
+function getUserBadgeClass(status) {
+    if (status === "ACTIF") {
+        return "bg-success-subtle text-success";
+    }
+
+    if (status === "EN_ATTENTE") {
+        return "bg-warning-subtle text-warning";
+    }
+
+    if (status === "BLOQUE") {
+        return "bg-danger-subtle text-danger";
+    }
+
+    return "bg-secondary-subtle text-secondary";
 }
 
 function getCompanyBadgeClass(status) {
@@ -1192,10 +1403,17 @@ function getOfferBadgeClass(status) {
     }
 
     if (status === "COMPLETE") {
+        return "bg-primary-subtle text-primary";
+    }
+
+    if (status === "ANNULEE") {
         return "bg-danger-subtle text-danger";
     }
 
-    if (status === "FERMEE") {
+    if (
+        status === "EXPIREE" ||
+        status === "FERMEE"
+    ) {
         return "bg-secondary-subtle text-secondary";
     }
 

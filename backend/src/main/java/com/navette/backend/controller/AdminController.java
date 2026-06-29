@@ -1,11 +1,12 @@
 package com.navette.backend.controller;
 
 import com.navette.backend.dto.AdminStatsResponse;
+import com.navette.backend.dto.AdminUserResponse;
 import com.navette.backend.dto.CompanyStatusRequest;
+import com.navette.backend.dto.UserStatusRequest;
 import com.navette.backend.entity.Demand;
 import com.navette.backend.entity.Offer;
 import com.navette.backend.entity.TransportCompany;
-import com.navette.backend.entity.User;
 import com.navette.backend.enums.CompanyStatus;
 import com.navette.backend.service.AdminService;
 import jakarta.validation.Valid;
@@ -22,8 +23,16 @@ public class AdminController {
     private final AdminService adminService;
 
     @GetMapping("/users")
-    public List<User> getUsers() {
+    public List<AdminUserResponse> getUsers() {
         return adminService.getUsers();
+    }
+
+    @PutMapping("/users/{id}/status")
+    public AdminUserResponse updateUserStatus(
+            @PathVariable Long id,
+            @Valid @RequestBody UserStatusRequest request
+    ) {
+        return adminService.updateUserStatus(id, request);
     }
 
     @GetMapping("/companies")
@@ -50,30 +59,21 @@ public class AdminController {
     public TransportCompany validateCompany(
             @PathVariable Long id
     ) {
-        return adminService.updateCompanyStatus(
-                id,
-                CompanyStatus.VALIDEE
-        );
+        return adminService.validateCompany(id);
     }
 
     @PutMapping("/companies/{id}/reject")
     public TransportCompany rejectCompany(
             @PathVariable Long id
     ) {
-        return adminService.updateCompanyStatus(
-                id,
-                CompanyStatus.REFUSEE
-        );
+        return adminService.rejectCompany(id);
     }
 
     @PutMapping("/companies/{id}/block")
     public TransportCompany blockCompany(
             @PathVariable Long id
     ) {
-        return adminService.updateCompanyStatus(
-                id,
-                CompanyStatus.BLOQUEE
-        );
+        return adminService.blockCompany(id);
     }
 
     @GetMapping("/offers")
