@@ -1,21 +1,55 @@
-import { Link, Outlet, useNavigate } from "react-router-dom";
 import {
+    useEffect,
+    useState,
+} from "react";
+
+import {
+    Link,
+    Outlet,
+    useNavigate,
+} from "react-router-dom";
+
+import {
+    Building2,
     Bus,
+    CalendarDays,
     Home,
     LogOut,
-    Shield,
-    User,
-    Building2,
-    CalendarDays,
     Search,
+    Shield,
     Ticket,
+    User,
+    UserRound,
 } from "lucide-react";
 
 export default function DashboardLayout({ role }) {
     const navigate = useNavigate();
 
-    const email = localStorage.getItem("email");
+    const [email, setEmail] = useState(
+        () => localStorage.getItem("email")
+    );
+
     const storedRole = localStorage.getItem("role");
+
+    useEffect(() => {
+        const handleProfileUpdated = () => {
+            setEmail(
+                localStorage.getItem("email")
+            );
+        };
+
+        window.addEventListener(
+            "profile-updated",
+            handleProfileUpdated
+        );
+
+        return () => {
+            window.removeEventListener(
+                "profile-updated",
+                handleProfileUpdated
+            );
+        };
+    }, []);
 
     const handleLogout = () => {
         localStorage.clear();
@@ -23,21 +57,60 @@ export default function DashboardLayout({ role }) {
     };
 
     const getTitle = () => {
-        if (role === "admin") return "Administration";
-        if (role === "company") return "Espace Société";
+        if (role === "admin") {
+            return "Administration";
+        }
+
+        if (role === "company") {
+            return "Espace Société";
+        }
+
         return "Espace Utilisateur";
     };
 
     const getIcon = () => {
-        if (role === "admin") return <Shield size={20} />;
-        if (role === "company") return <Building2 size={20} />;
+        if (role === "admin") {
+            return <Shield size={20} />;
+        }
+
+        if (role === "company") {
+            return <Building2 size={20} />;
+        }
+
         return <User size={20} />;
+    };
+
+    const getDashboardPath = () => {
+        if (role === "admin") {
+            return "/admin/dashboard";
+        }
+
+        if (role === "company") {
+            return "/company/dashboard";
+        }
+
+        return "/user/dashboard";
+    };
+
+    const getProfilePath = () => {
+        if (role === "admin") {
+            return "/admin/profile";
+        }
+
+        if (role === "company") {
+            return "/company/profile";
+        }
+
+        return "/user/profile";
     };
 
     return (
         <div className="dashboard-shell">
             <aside className="dashboard-sidebar">
-                <Link to="/" className="dashboard-logo">
+                <Link
+                    to="/"
+                    className="dashboard-logo"
+                >
                     <Bus size={24} />
                     <span>Navette</span>
                 </Link>
@@ -48,45 +121,66 @@ export default function DashboardLayout({ role }) {
                     </div>
 
                     <div>
-                        <strong>{email || "Utilisateur"}</strong>
+                        <strong>
+                            {email || "Utilisateur"}
+                        </strong>
+
                         <small>{storedRole}</small>
                     </div>
                 </div>
 
                 <nav className="dashboard-nav">
-                    <Link to="/" className="dashboard-link">
+                    <Link
+                        to="/"
+                        className="dashboard-link"
+                    >
                         <Home size={18} />
                         Accueil
                     </Link>
 
-                    <Link to="/simple-reservation" className="dashboard-link">
-                        <Ticket size={18} />
-                        Billet
+                    <Link
+                        to={getDashboardPath()}
+                        className="dashboard-link"
+                    >
+                        {getIcon()}
+                        Tableau de bord
                     </Link>
 
-                    <Link to="/offers" className="dashboard-link">
-                        <Search size={18} />
-                        Horaires
-                    </Link>
+                    {role !== "admin" && (
+                        <>
+                            <Link
+                                to="/simple-reservation"
+                                className="dashboard-link"
+                            >
+                                <Ticket size={18} />
+                                Billet
+                            </Link>
 
-                    <Link to="/regular-reservation" className="dashboard-link">
-                        <CalendarDays size={18} />
-                        Demande
-                    </Link>
+                            <Link
+                                to="/offers"
+                                className="dashboard-link"
+                            >
+                                <Search size={18} />
+                                Horaires
+                            </Link>
 
-                    {role === "company" && (
-                        <Link to="/company/dashboard" className="dashboard-link">
-                            <Building2 size={18} />
-                            Société
-                        </Link>
+                            <Link
+                                to="/regular-reservation"
+                                className="dashboard-link"
+                            >
+                                <CalendarDays size={18} />
+                                Demande
+                            </Link>
+                        </>
                     )}
 
-                    {role === "admin" && (
-                        <Link to="/admin/dashboard" className="dashboard-link">
-                            <Shield size={18} />
-                            Admin
-                        </Link>
-                    )}
+                    <Link
+                        to={getProfilePath()}
+                        className="dashboard-link"
+                    >
+                        <UserRound size={18} />
+                        Mon profil
+                    </Link>
                 </nav>
 
                 <button
@@ -103,7 +197,11 @@ export default function DashboardLayout({ role }) {
                 <header className="dashboard-header">
                     <div>
                         <h4>{getTitle()}</h4>
-                        <p>Bienvenue dans votre espace de gestion.</p>
+
+                        <p>
+                            Bienvenue dans votre espace
+                            de gestion.
+                        </p>
                     </div>
 
                     <div className="dashboard-header-actions">

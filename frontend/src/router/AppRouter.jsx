@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Navigate, Route, Routes } from "react-router-dom";
 
 import PublicLayout from "../layouts/PublicLayout";
 import DashboardLayout from "../layouts/DashboardLayout";
@@ -17,6 +17,7 @@ import CompanyRegisterPage from "../pages/auth/CompanyRegisterPage";
 import UserDashboard from "../pages/user/UserDashboard";
 import CompanyDashboard from "../pages/company/CompanyDashboard";
 import AdminDashboard from "../pages/admin/AdminDashboard";
+import ProfilePage from "../pages/profile/ProfilePage";
 
 export default function AppRouter() {
     return (
@@ -24,12 +25,27 @@ export default function AppRouter() {
             <Route element={<PublicLayout />}>
                 <Route path="/" element={<HomePage />} />
                 <Route path="/offers" element={<OffersPage />} />
-                <Route path="/offers/:id" element={<OfferDetailsPage />} />
-                <Route path="/simple-reservation" element={<SimpleReservationPage />} />
-                <Route path="/regular-reservation" element={<RegularReservationPage />} />
+                <Route
+                    path="/offers/:id"
+                    element={<OfferDetailsPage />}
+                />
+                <Route
+                    path="/simple-reservation"
+                    element={<SimpleReservationPage />}
+                />
+                <Route
+                    path="/regular-reservation"
+                    element={<RegularReservationPage />}
+                />
                 <Route path="/login" element={<LoginPage />} />
-                <Route path="/register" element={<RegisterPage />} />
-                <Route path="/company/register" element={<CompanyRegisterPage />} />
+                <Route
+                    path="/register"
+                    element={<RegisterPage />}
+                />
+                <Route
+                    path="/company/register"
+                    element={<CompanyRegisterPage />}
+                />
             </Route>
 
             <Route
@@ -39,7 +55,15 @@ export default function AppRouter() {
                     </ProtectedRoute>
                 }
             >
-                <Route path="/user/dashboard" element={<UserDashboard />} />
+                <Route
+                    path="/user/dashboard"
+                    element={<UserDashboard />}
+                />
+
+                <Route
+                    path="/user/profile"
+                    element={<ProfilePage />}
+                />
             </Route>
 
             <Route
@@ -49,7 +73,15 @@ export default function AppRouter() {
                     </ProtectedRoute>
                 }
             >
-                <Route path="/company/dashboard" element={<CompanyDashboard />} />
+                <Route
+                    path="/company/dashboard"
+                    element={<CompanyDashboard />}
+                />
+
+                <Route
+                    path="/company/profile"
+                    element={<ProfilePage />}
+                />
             </Route>
 
             <Route
@@ -59,10 +91,21 @@ export default function AppRouter() {
                     </ProtectedRoute>
                 }
             >
-                <Route path="/admin/dashboard" element={<AdminDashboard />} />
+                <Route
+                    path="/admin/dashboard"
+                    element={<AdminDashboard />}
+                />
+
+                <Route
+                    path="/admin/profile"
+                    element={<ProfilePage />}
+                />
             </Route>
 
-            <Route path="*" element={<Navigate to="/" replace />} />
+            <Route
+                path="*"
+                element={<Navigate to="/" replace />}
+            />
         </Routes>
     );
 }
